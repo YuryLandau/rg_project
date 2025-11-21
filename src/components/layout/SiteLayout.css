@@ -1,0 +1,40 @@
+.site-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.site-layout__main {
+    flex: 1;
+}
+
+.site-layout__logo-link {
+    text-decoration: none;
+}
+
+.site-layout__logo {
+    font-size: clamp(1.5rem, 2vw, 2rem);
+    font-weight: 700;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.site-layout__user-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.site-layout__user-name {
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .site-layout__user-name {
+        display: none;
+    }
+}
