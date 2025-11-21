@@ -1,0 +1,86 @@
+/* Componente Button - Estilos */
+.btn {
+    align-items: center;
+    border: none;
+    border-radius: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    justify-content: center;
+    min-width: 100px;
+    padding: 0;
+    text-align: center;
+    text-decoration: none;
+    touch-action: manipulation;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.btn:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+/* Variants */
+.btn--primary {
+    background-color: rgba(var(--color_17), var(--alpha-bg, 1));
+    border: 0 solid rgba(var(--color_15), var(--alpha-brd, 1));
+    color: rgb(var(--color_15));
+}
+
+.btn--primary:hover:not(:disabled) {
+    background-color: rgba(var(--color_18), var(--alpha-bgh, 1));
+    color: rgb(var(--color_15));
+}
+
+.btn--secondary {
+    background-color: transparent;
+    border: 2px solid rgba(var(--color_17), var(--alpha-brd, 1));
+    color: rgb(var(--color_17));
+}
+
+.btn--secondary:hover:not(:disabled) {
+    background-color: rgba(var(--color_17), 0.1);
+}
+
+.btn--outline {
+    background-color: transparent;
+    border: 1px solid rgba(var(--color_15), var(--alpha-brd, 1));
+    color: rgb(var(--color_15));
+}
+
+.btn--outline:hover:not(:disabled) {
+    background-color: rgba(var(--color_15), 0.05);
+}
+
+/* Sizes */
+.btn--small {
+    font-size: 14px;
+    min-height: 36px;
+    padding: 8px 16px;
+}
+
+.btn--medium {
+    font-size: 16px;
+    min-height: 44px;
+    padding: 12px 24px;
+}
+
+.btn--large {
+    font-size: 18px;
+    min-height: 52px;
+    padding: 16px 32px;
+}
+
+/* States */
+.btn--disabled,
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.btn--full-width {
+    width: 100%;
+}

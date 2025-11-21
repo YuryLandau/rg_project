@@ -1,0 +1,57 @@
+/* Componente Section - Estilos */
+.section {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: relative;
+    width: 100%;
+}
+
+/* Padding Variants */
+.section--padding-none {
+    padding-bottom: 0;
+    padding-top: 0;
+}
+
+.section--padding-sm {
+    padding-bottom: 2rem;
+    padding-top: 2rem;
+}
+
+.section--padding-md {
+    padding-bottom: 4rem;
+    padding-top: 4rem;
+}
+
+.section--padding-lg {
+    padding-bottom: 6rem;
+    padding-top: 6rem;
+}
+
+.section--padding-xl {
+    padding-bottom: 8rem;
+    padding-top: 8rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .section--padding-sm {
+        padding-bottom: 1.5rem;
+        padding-top: 1.5rem;
+    }
+
+    .section--padding-md {
+        padding-bottom: 3rem;
+        padding-top: 3rem;
+    }
+
+    .section--padding-lg {
+        padding-bottom: 4rem;
+        padding-top: 4rem;
+    }
+
+    .section--padding-xl {
+        padding-bottom: 5rem;
+        padding-top: 5rem;
+    }
+}

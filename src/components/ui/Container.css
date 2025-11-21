@@ -1,0 +1,61 @@
+/* Componente Container - Estilos */
+.container {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+/* Max Widths */
+.container--sm {
+    max-width: 640px;
+}
+
+.container--md {
+    max-width: 768px;
+}
+
+.container--lg {
+    max-width: 1024px;
+}
+
+.container--xl {
+    max-width: 1280px;
+}
+
+.container--full {
+    max-width: 100%;
+}
+
+/* Padding */
+.container--padding-none {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.container--padding-sm {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.container--padding-md {
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.container--padding-lg {
+    padding-left: 3rem;
+    padding-right: 3rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container--padding-md {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .container--padding-lg {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
