@@ -1,0 +1,109 @@
+.subscribe-page {
+    padding: var(--spacing-8) 0;
+}
+
+.subscribe-header {
+    text-align: center;
+    margin-bottom: var(--spacing-10);
+}
+
+.subscribe-header h1 {
+    font-size: var(--font-size-3xl);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-3);
+}
+
+.subscribe-header p {
+    font-size: var(--font-size-lg);
+    color: var(--color-text-light);
+}
+
+.subscribe-plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-6);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.subscribe-plan-card {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-8);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: var(--transition-fast);
+}
+
+.subscribe-plan-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+}
+
+.subscribe-plan-card--highlighted {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.subscribe-plan-badge {
+    position: absolute;
+    top: -12px;
+    right: var(--spacing-6);
+    background: var(--color-primary);
+    color: white;
+    padding: var(--spacing-2) var(--spacing-4);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.subscribe-plan-name {
+    font-size: var(--font-size-xl);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-4);
+}
+
+.subscribe-plan-price {
+    margin-bottom: var(--spacing-6);
+}
+
+.subscribe-plan-price-value {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.subscribe-plan-price-period {
+    font-size: var(--font-size-base);
+    color: var(--color-text-light);
+    margin-left: var(--spacing-1);
+}
+
+.subscribe-plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--spacing-6) 0;
+    flex: 1;
+}
+
+.subscribe-plan-features li {
+    padding: var(--spacing-3) 0;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.subscribe-plan-feature-icon {
+    color: var(--color-primary);
+    font-weight: 700;
+    font-size: var(--font-size-lg);
+}
+
+@media (max-width: 768px) {
+    .subscribe-plans {
+        grid-template-columns: 1fr;
+    }
+}
