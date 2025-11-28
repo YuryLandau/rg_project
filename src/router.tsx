@@ -9,6 +9,8 @@ import { Register } from './pages/Register';
 import { Profile } from './pages/Profile';
 import { Payment } from './pages/Payment';
 import { Subscribe } from './pages/Subscribe';
+import { PaymentSuccess } from './pages/PaymentSuccess';
+import { PaymentCanceled } from './pages/PaymentCanceled';
 
 export const router = createBrowserRouter([
     {
@@ -54,6 +56,15 @@ export const router = createBrowserRouter([
                         <Payment />
                     </RequireAuth>
                 )
+            },
+            // Rotas de retorno de gateway (case-sensitive conforme backend)
+            {
+                path: 'Payment/sucesso',
+                element: <PaymentSuccess />
+            },
+            {
+                path: 'Payment/cancelado',
+                element: <PaymentCanceled />
             },
             {
                 path: '*',
