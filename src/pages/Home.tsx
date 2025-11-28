@@ -3,6 +3,7 @@ import { HeroSection } from '../components/sections/HeroSection';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
+import { DwgUnificadoSection } from '../components/sections/DwgUnificadoSection';
 import { Head } from '../components/layout/Head';
 
 export const Home = () => {
@@ -15,28 +16,38 @@ export const Home = () => {
             <HeroSection
                 title="RG BIM"
                 subtitle="Famílias Paramétricas para Projetos Industriais no Revit"
+                description="Biblioteca + Automação para acelerar documentação técnica no Revit. Exportações unificadas e verificação inteligente de tubulações."
                 backgroundImage="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2072"
                 overlay={true}
+                version="1.5.3"
+                versionDate="10/11/2025"
+                versionSize="24 MB"
+                downloadHref="/downloads"
+                videoSrc="/images/video_3.mp4"
+                alignment="left"
                 actions={
                     <>
-                        <Link to="/subscribe">
+                        <Link to="/downloads">
                             <Button variant="primary" size="large">
-                                Ver Planos
+                                Baixar Agora
                             </Button>
                         </Link>
-                        <Link to="/downloads">
+                        <Link to="/subscribe">
                             <Button variant="secondary" size="large">
-                                Downloads
+                                Ver Planos
                             </Button>
                         </Link>
                     </>
                 }
             />
 
+            {/* DWG Unificado Section (Carro Chefe) */}
+            <DwgUnificadoSection />
+
             {/* Sobre o Projeto Section */}
             <Section>
                 <Container>
-                    <div className="py-16">
+                    <div className="pb-16 pt-10">
                         <div className="max-w-4xl mx-auto">
                             <h2 className="text-4xl font-bold text-gray-900 text-center mb-6">Sobre o RG BIM</h2>
                             <div className="space-y-6 text-gray-700 leading-relaxed text-lg">
@@ -219,6 +230,7 @@ export const Home = () => {
                 </Container>
             </Section>
 
+
             {/* Download Section */}
             <Section backgroundColor="#6495ED">
                 <Container>
@@ -284,23 +296,23 @@ export const Home = () => {
                                 </div>
                                 <ul className="space-y-3">
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Plotagem DWG (múltiplos arquivos)</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Plotagem DWG 3D</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Plotagem PDF (unificado ou múltiplos)</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">10 downloads por mês</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Suporte por email</span>
                                     </li>
                                 </ul>
@@ -314,7 +326,7 @@ export const Home = () => {
                             </div>
 
                             {/* Plano Premium */}
-                            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary rounded-xl p-8 relative">
+                            <div className="bg-linear-to-br from-primary/5 to-primary/10 border-2 border-primary rounded-xl p-8 relative">
                                 <div className="absolute -top-3 right-6 bg-primary text-white px-4 py-1 rounded-full text-sm font-semibold">
                                     Recomendado
                                 </div>
@@ -327,35 +339,35 @@ export const Home = () => {
                                 </div>
                                 <ul className="space-y-3">
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Biblioteca completa de Conexões</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Biblioteca completa de Tubulações</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Tabelas RGBIM com filtros prontos</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">DWG unificado (via AutoCAD)</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Cortar Tubos automaticamente</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Verificar Tubos desconectados</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Downloads ilimitados</span>
                                     </li>
                                     <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl flex-shrink-0 mt-0.5">✓</span>
+                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Suporte prioritário</span>
                                     </li>
                                 </ul>
