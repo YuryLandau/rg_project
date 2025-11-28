@@ -1,62 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
-import { useAuth } from '../context/AuthContext';
-import { getPluginDownloadLinks, downloadProductFile } from '../services/api';
-
-interface PluginLinkMap { [key: string]: string | number | null | undefined; }
 
 export const Downloads = () => {
-    const { user, accessToken } = useAuth();
-    const [pluginLinks, setPluginLinks] = useState<Record<string, string>>({});
-    const [material, setMaterial] = useState('Tubos');
-    const [fileName, setFileName] = useState('');
-    const [downloading, setDownloading] = useState(false);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        const load = async () => {
-            if (!accessToken) return;
-            try {
-                const data = await getPluginDownloadLinks(accessToken);
-                // Remove status e filtra apenas URLs
-                const links: Record<string, string> = {};
-                Object.entries(data).forEach(([k, v]) => {
-                    if (k !== 'status' && typeof v === 'string') links[k] = v;
-                });
-                setPluginLinks(links);
-            } catch (e: any) {
-                // Silencia se não encontrado
-            }
-        };
-        load();
-    }, [accessToken]);
-
-    const handleDownloadProduto = async () => {
-        if (!accessToken) {
-            setError('É necessário estar logado.');
-            return;
-        }
-        setError('');
-        setDownloading(true);
-        try {
-            const blob = await downloadProductFile(accessToken, material, fileName || undefined);
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName || `${material}.bin`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-        } catch (e: any) {
-            setError(e?.message || 'Erro ao baixar arquivo');
-        } finally {
-            setDownloading(false);
-        }
-    };
 
     return (
         <>
@@ -66,47 +13,61 @@ export const Downloads = () => {
             />
             <Section>
                 <Container>
-                    <div className="py-16">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-4">Downloads</h1>
-                        <p className="text-gray-600 mb-8 max-w-3xl">Acesse biblioteca de famílias (Revit) e plugins. Plano Premium necessário para arquivos de produto.</p>
+                    <div className="pb-16">
+                        {/* Logo relação Revit + RGBIM (ilustração discreta) */}
+                        <div className="flex justify-center mb-10">
+                            <figure className="text-center">
+                                <img
+                                    src="/images/Revit_Bim.jpeg"
+                                    alt="Integração entre Autodesk Revit e RG BIM"
+                                    className="w-full max-w-xs md:max-w-sm h-auto rounded-lg shadow-sm"
+                                    loading="lazy"
+                                />
+                                <figcaption className="mt-2 text-xs text-gray-500">Ferramentas RG BIM integradas ao fluxo de trabalho no Revit</figcaption>
+                            </figure>
+                        </div>
+
+                        <h1 className="text-4xl font-bold text-gray-900 mb-2">Downloads</h1>
+                        <p className="text-gray-600 mb-8 max-w-3xl">Lista mockada de artefatos para download (exemplo demonstrativo).</p>
 
                         <div className="grid gap-10">
-                            <div className="bg-white p-6 rounded-xl shadow flex flex-col gap-4">
-                                <h2 className="text-xl font-bold">Download de Arquivos de Produto</h2>
-                                <div className="grid gap-4 md:grid-cols-3">
-                                    <div className="form-group flex flex-col gap-1">
-                                        <label className="text-sm font-medium" htmlFor="material">Material</label>
-                                        <input id="material" value={material} onChange={e => setMaterial(e.target.value)} placeholder="Ex: Tubos" />
-                                    </div>
-                                    <div className="form-group flex flex-col gap-1">
-                                        <label className="text-sm font-medium" htmlFor="fileName">Nome (opcional)</label>
-                                        <input id="fileName" value={fileName} onChange={e => setFileName(e.target.value)} placeholder="Ex: RG_Tubos_2025.rte" />
-                                    </div>
-                                    <div className="flex items-end">
-                                        <Button variant="primary" size="medium" disabled={downloading || !user} onClick={handleDownloadProduto}>
-                                            {downloading ? 'Baixando...' : 'Baixar'}
-                                        </Button>
-                                    </div>
-                                </div>
-                                {!user && <p className="text-sm text-red-600">Faça login para baixar.</p>}
-                                {error && <p className="text-sm text-red-600">{error}</p>}
-                                <p className="text-xs text-gray-500">Se não informar nome, tenta baixar template do material.</p>
-                            </div>
 
-                            <div className="bg-white p-6 rounded-xl shadow flex flex-col gap-4">
-                                <h2 className="text-xl font-bold">Plugins Revit</h2>
-                                {!user && <p className="text-sm text-red-600">Faça login para ver links de plugins.</p>}
-                                {user && Object.keys(pluginLinks).length === 0 && <p className="text-sm text-gray-600">Nenhum plugin disponível ou não encontrado.</p>}
-                                <ul className="divide-y divide-gray-200">
-                                    {Object.entries(pluginLinks).map(([key, url]) => (
-                                        <li key={key} className="py-3 flex items-center justify-between">
-                                            <span className="font-medium">{key}</span>
-                                            <a href={url} className="text-sm">
-                                                <Button variant="outline" size="small">Baixar</Button>
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
+                            {/* Tabela de downloads mockada */}
+                            <div className="bg-white p-6 rounded-xl shadow">
+                                <h2 className="text-xl font-bold mb-4">Downloads Disponíveis (Mock)</h2>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full text-left text-sm">
+                                        <thead>
+                                            <tr className="border-b">
+                                                <th className="py-3 px-4 font-semibold text-gray-700">Item</th>
+                                                <th className="py-3 px-4 font-semibold text-gray-700">Versão</th>
+                                                <th className="py-3 px-4 font-semibold text-gray-700">Tamanho</th>
+                                                <th className="py-3 px-4 font-semibold text-gray-700">Atualizado</th>
+                                                <th className="py-3 px-4 font-semibold text-gray-700">Ação</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {[
+                                                { nome: 'Biblioteca de Famílias – Tubulações', versao: '1.5.3', tamanho: '24 MB', data: '10/11/2025' },
+                                                { nome: 'Biblioteca de Famílias – Válvulas', versao: '1.4.0', tamanho: '18 MB', data: '02/10/2025' },
+                                                { nome: 'Plugin RG BIM Tools', versao: '1.5.3', tamanho: '12 MB', data: '10/11/2025' },
+                                                { nome: 'Inserts e Suportes Paramétricos', versao: '1.2.1', tamanho: '9 MB', data: '15/09/2025' },
+                                                { nome: 'Documentação e Templates', versao: '1.0.8', tamanho: '5 MB', data: '01/08/2025' },
+                                                { nome: 'Tabelas RG BIM (Filtros Prontos)', versao: '1.3.2', tamanho: '3 MB', data: '20/10/2025' }
+                                            ].map((item, idx) => (
+                                                <tr key={idx}>
+                                                    <td className="py-3 px-4 text-gray-800">{item.nome}</td>
+                                                    <td className="py-3 px-4 text-gray-600">{item.versao}</td>
+                                                    <td className="py-3 px-4 text-gray-600">{item.tamanho}</td>
+                                                    <td className="py-3 px-4 text-gray-600">{item.data}</td>
+                                                    <td className="py-3 px-4">
+                                                        <Button variant="outline" size="small">Baixar</Button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
