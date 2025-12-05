@@ -3,6 +3,7 @@
 // Cai para http://localhost:5000 se variável não estiver definida.
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+export const API_BASE_URL = BASE_URL;
 
 interface LoginResponse {
     tokenAcesso: string;
@@ -110,11 +111,16 @@ export async function cancelSubscription(token: string) {
     if (!res.ok) throw new Error('Falha ao cancelar assinatura');
 }
 
+export interface PluginDownloadLinksResponse {
+    status: number;
+    plugins: Array<{ key: string; url: string; year?: number }>;
+}
+
 export async function getPluginDownloadLinks(token: string) {
     const res = await fetch(`${BASE_URL}/api/plugin/download-links`, {
         headers: buildHeaders(token)
     });
-    return handleResponse<Record<string, string | number | null | undefined>>(res); // status + chave->URL
+    return handleResponse<PluginDownloadLinksResponse>(res);
 }
 
 export async function downloadProductFile(token: string, material: string, name?: string) {
@@ -133,4 +139,35 @@ export function mapFuncaoParaPlano(funcao?: string): string {
         case 'Admin': return 'admin';
         default: return 'free';
     }
+}
+
+// -------- Plugins helpers (frontend-only normalization) --------
+export interface PluginItem {
+    key: string; // e.g., Plugin2025
+    year?: number; // e.g., 2025
+    url: string; // absolute URL to download endpoint
+}
+
+export function extractYearFromKey(key: string): number | undefined {
+    const m = /([0-9]{4})$/.exec(key);
+    if (!m) return undefined;
+    const y = Number(m[1]);
+    return Number.isFinite(y) ? y : undefined;
+}
+
+export function normalizePluginLinks(response: PluginDownloadLinksResponse | undefined | null): PluginItem[] {
+    if (!response || !Array.isArray(response.plugins)) return [];
+    const items: PluginItem[] = response.plugins.map(p => ({
+        key: p.key,
+        year: p.year ?? extractYearFromKey(p.key),
+        url: p.url
+    }));
+    // Sort by year desc, fallback to name
+    items.sort((a, b) => (b.year ?? -Infinity) - (a.year ?? -Infinity) || a.key.localeCompare(b.key));
+    return items;
+}
+
+export function latestPlugin(items: PluginItem[]): PluginItem | undefined {
+    if (!items.length) return undefined;
+    return items[0];
 }

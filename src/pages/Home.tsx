@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HeroSection } from '../components/sections/HeroSection';
 import { Section } from '../components/ui/Section';
@@ -5,8 +6,33 @@ import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { DwgUnificadoSection } from '../components/sections/DwgUnificadoSection';
 import { Head } from '../components/layout/Head';
+import { useAuth } from '../context/AuthContext';
+import { getPluginDownloadLinks, latestPlugin, normalizePluginLinks } from '../services/api';
 
 export const Home = () => {
+    const { accessToken } = useAuth();
+    const [heroVersion, setHeroVersion] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        let active = true;
+        async function loadLatest() {
+            if (!accessToken) {
+                setHeroVersion(undefined);
+                return;
+            }
+            try {
+                const raw = await getPluginDownloadLinks(accessToken);
+                if (!active) return;
+                const items = normalizePluginLinks(raw);
+                const lp = latestPlugin(items);
+                setHeroVersion(lp?.year ? String(lp.year) : undefined);
+            } catch {
+                if (active) setHeroVersion(undefined);
+            }
+        }
+        loadLatest();
+        return () => { active = false; };
+    }, [accessToken]);
     return (
         <>
             <Head
@@ -19,9 +45,7 @@ export const Home = () => {
                 description="Biblioteca + Automação para acelerar documentação técnica no Revit. Exportações unificadas e verificação inteligente de tubulações."
                 backgroundImage="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2072"
                 overlay={true}
-                version="1.5.3"
-                versionDate="10/11/2025"
-                versionSize="24 MB"
+                version={heroVersion}
                 downloadHref="/downloads"
                 videoSrc="/images/video_3.mp4"
                 alignment="left"
@@ -249,7 +273,7 @@ export const Home = () => {
                                     </div>
                                     <div className="text-left">
                                         <h3 className="text-2xl font-bold text-gray-900">Plugin RG BIM Tools</h3>
-                                        <p className="text-gray-600">Versão 1.5.3 • 24 MB • Atualizado em 10/11/2025</p>
+                                        <p className="text-gray-600">Compatível com Revit {heroVersion ?? '2025+'} • veja todas as versões</p>
                                     </div>
                                 </div>
                                 <div className="space-y-3 text-left mb-6">
@@ -262,11 +286,11 @@ export const Home = () => {
                                     </ul>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-4">
-                                    <a href="#" className="flex-1">
+                                    <Link to="/downloads" className="flex-1">
                                         <Button variant="primary" size="large" fullWidth>
                                             Baixar Agora
                                         </Button>
-                                    </a>
+                                    </Link>
                                     <Link to="/downloads" className="flex-1">
                                         <Button variant="outline" size="large" fullWidth>
                                             Ver Todas as Versões
