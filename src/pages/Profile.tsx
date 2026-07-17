@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import type { FormEvent } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { cancelSubscription } from '../services/api';
@@ -10,17 +9,7 @@ import { Button } from '../components/ui/Button';
 
 export const Profile = () => {
     const navigate = useNavigate();
-    const { user, updateProfileLocal, refreshProfile, accessToken } = useAuth();
-    const [name, setName] = useState(user?.name || '');
-    const [email, setEmail] = useState(user?.email || '');
-    const [success, setSuccess] = useState(false);
-
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        updateProfileLocal({ name, email });
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
-    };
+    const { user, refreshProfile, accessToken } = useAuth();
 
     useEffect(() => {
         refreshProfile();
@@ -49,17 +38,16 @@ export const Profile = () => {
                     <div className="py-16 min-h-[60vh]">
                         <div className="bg-white p-8 rounded-xl shadow-lg">
                             <h1 className="text-3xl font-bold text-gray-900 mb-2">Meu Perfil</h1>
-                            <p className="text-gray-600 mb-6">Gerencie suas informações pessoais</p>
+                            <p className="text-gray-600 mb-6">Seus dados estão protegidos. Para alterar sua senha, use o botão abaixo.</p>
 
-                            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                            <div className="flex flex-col gap-5">
                                 <div className="form-group">
                                     <label htmlFor="name">Nome</label>
                                     <input
                                         type="text"
                                         id="name"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="Seu nome completo"
+                                        value={user?.name || ''}
+                                        disabled
                                     />
                                 </div>
 
@@ -68,10 +56,8 @@ export const Profile = () => {
                                     <input
                                         type="email"
                                         id="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="seu@email.com"
-                                        required
+                                        value={user?.email || ''}
+                                        disabled
                                     />
                                 </div>
 
@@ -81,7 +67,7 @@ export const Profile = () => {
                                         <span className="text-primary font-semibold uppercase text-sm">{user?.plan || 'Free'}</span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button type="button" variant="primary" size="small" onClick={() => navigate('/subscribe')} fullWidth>
+                                        <Button type="button" className="cursor-pointer" variant="primary" size="small" onClick={() => navigate('/subscribe')} fullWidth>
                                             {user?.plan === 'premium' ? 'Ver Planos' : 'Mudar de Plano'}
                                         </Button>
                                         {user?.plan === 'premium' && (
@@ -92,21 +78,16 @@ export const Profile = () => {
                                     </div>
                                 </div>
 
-                                {success && (
-                                    <div className="p-3 bg-green-50 border border-green-300 rounded-lg text-green-700 text-sm text-center" role="alert">
-                                        Perfil atualizado com sucesso!
-                                    </div>
-                                )}
-
                                 <Button
-                                    type="submit"
-                                    variant="primary"
+                                    type="button"
+                                    className="cursor-pointer"
+                                    variant="outline"
                                     size="large"
                                     fullWidth
-                                >
-                                    Salvar Alterações
+                                    onClick={() => navigate('/change-password')}>
+                                    Alterar senha
                                 </Button>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </Container>

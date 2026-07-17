@@ -4,19 +4,45 @@ import { Header } from '../sections/Header';
 import { Footer } from '../sections/Footer';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import { manageSubscription } from '../../services/api';
 
 /**
  * SiteLayout - Layout principal do site
  * Contém Header e Footer fixos, com conteúdo dinâmico via Outlet
  */
 export const SiteLayout = () => {
-    const { user, logout } = useAuth();
+    const { user, accessToken, logout } = useAuth();
     const navigate = useNavigate();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
         navigate('/');
+    };
+
+    const handleManageSubscription = async () => {
+        if (!subscriptionsEnabled) {
+            alert(subscriptionsDisabledMessage);
+            setUserMenuOpen(false);
+            return;
+        }
+
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+        if (!accessToken) {
+            alert('Token ausente. Faça login novamente.');
+            navigate('/login');
+            return;
+        }
+        try {
+            const url = await manageSubscription(accessToken);
+            // Frontend redireciona para Stripe
+            window.location.href = url;
+        } catch (e: any) {
+            alert(e?.message || 'Erro ao gerenciar assinatura');
+        }
     };
 
     // Helper to get user initials
@@ -44,8 +70,15 @@ export const SiteLayout = () => {
     const navigation = [
         { label: 'Home', href: '/' },
         { label: 'Sobre', href: '/about' },
-        { label: 'Downloads', href: '/downloads' }
+        { label: 'Downloads', href: '/downloads' },
+        { label: 'Tutoriais', href: '/tutoriais-plugins' }
     ];
+
+    const subscriptionsEnabled = import.meta.env.VITE_SUBSCRIPTIONS_ENABLED === 'true';
+
+    const subscriptionsDisabledMessage =
+        import.meta.env.VITE_SUBSCRIPTIONS_DISABLED_MESSAGE ||
+        'As assinaturas Premium serão liberadas em breve.';
 
     const actions = user ? (
         <div className="relative">
@@ -81,16 +114,20 @@ export const SiteLayout = () => {
                         >
                             Perfil
                         </Link>
-                        <Link
-                            to="/payment"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
-                        >
-                            Cartão
-                        </Link>
+                        <div className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors cursor-pointer"
+                            onClick={handleManageSubscription}>
+                            Gerenciar assinatura
+                        </div>
                         <Link
                             to="/subscribe"
-                            onClick={() => setUserMenuOpen(false)}
+                            onClick={(e) => {
+                                setUserMenuOpen(false);
+
+                                if (!subscriptionsEnabled) {
+                                    e.preventDefault();
+                                    alert(subscriptionsDisabledMessage);
+                                }
+                            }}
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
                         >
                             Assinatura
@@ -98,8 +135,7 @@ export const SiteLayout = () => {
                         <div className="border-t border-gray-200 mt-2 pt-2">
                             <button
                                 onClick={handleLogout}
-                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                            >
+                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
                                 Sair
                             </button>
                         </div>

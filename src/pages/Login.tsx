@@ -82,6 +82,13 @@ export const Login = () => {
                                     </div>
                                 )}
 
+                                <p className="text-gray-600 text-sm">
+                                    Esqueceu sua senha?{' '}
+                                    <Link to="/forgot-password" className="text-primary font-semibold hover:underline transition-all">
+                                        Clique aqui
+                                    </Link>
+                                </p>
+
                                 <Button
                                     type="submit"
                                     variant="primary"

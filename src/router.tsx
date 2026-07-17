@@ -11,6 +11,13 @@ import { Payment } from './pages/Payment';
 import { Subscribe } from './pages/Subscribe';
 import { PaymentSuccess } from './pages/PaymentSuccess';
 import { PaymentCanceled } from './pages/PaymentCanceled';
+import { VerifyEmail } from './pages/VerifyEmail';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
+import { ResetPasswordCode } from './pages/ResetPasswordCode';
+import { ChangePassword } from './pages/ChangePassword';
+import { RequestPasswordResetLogged } from './pages/RequestPasswordResetLogged';
+import { TutoriaisPlugin } from './pages/TutoriaisPlugin';
 
 export const router = createBrowserRouter([
     {
@@ -30,6 +37,10 @@ export const router = createBrowserRouter([
                 element: <Downloads />
             },
             {
+                path: 'tutoriais-plugins',
+                element: <TutoriaisPlugin />
+            },
+            {
                 path: 'login',
                 element: <Login />
             },
@@ -37,6 +48,10 @@ export const router = createBrowserRouter([
                 path: 'register',
                 element: <Register />
             },
+            { path: 'verify-email', element: <VerifyEmail /> },
+            { path: 'forgot-password', element: <ForgotPassword /> },
+            { path: 'reset-password', element: <ResetPassword /> },
+            { path: 'reset-password-code', element: <ResetPasswordCode /> },
             {
                 path: 'subscribe',
                 element: <Subscribe />
@@ -54,6 +69,22 @@ export const router = createBrowserRouter([
                 element: (
                     <RequireAuth>
                         <Payment />
+                    </RequireAuth>
+                )
+            },
+            {
+                path: 'change-password',
+                element: (
+                    <RequireAuth>
+                        <ChangePassword />
+                    </RequireAuth>
+                )
+            },
+            {
+                path: 'request-password-reset-logged',
+                element: (
+                    <RequireAuth>
+                        <RequestPasswordResetLogged />
                     </RequireAuth>
                 )
             },

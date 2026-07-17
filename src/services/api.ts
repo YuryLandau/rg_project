@@ -103,6 +103,15 @@ export async function startSubscription(token: string) {
     return data.urlStripe;
 }
 
+export async function manageSubscription(token: string) {
+    const res = await fetch(`${BASE_URL}/api/user/manage-subscription`, {
+        method: 'POST',
+        headers: buildHeaders(token)
+    });
+    const data = await handleResponse<{ status: number; urlStripe: string }>(res);
+    return data.urlStripe;
+}
+
 export async function cancelSubscription(token: string) {
     const res = await fetch(`${BASE_URL}/api/user/cancel-subscription`, {
         method: 'DELETE',
@@ -170,4 +179,174 @@ export function normalizePluginLinks(response: PluginDownloadLinksResponse | und
 export function latestPlugin(items: PluginItem[]): PluginItem | undefined {
     if (!items.length) return undefined;
     return items[0];
+}
+
+export type UpdatePasswordResult = {
+  status: number;
+  mensagemSucesso?: string;
+  requiresReauth?: boolean;
+  errors?: any;
+};
+
+export async function updateUserPassword(
+    accessToken: string,
+    payload: { senhaAtual: string; novaSenha: string; confirmarNovaSenha: string }
+): Promise<UpdatePasswordResult> {
+    const res = await fetch(`${BASE_URL}/api/user/profile/update-password`, {
+        method: 'PATCH',
+        headers: buildHeaders(accessToken),
+        body: JSON.stringify(payload)
+    });
+
+    const text = await res.text();
+    let data: UpdatePasswordResult | null = null;
+
+    try {
+        data = text ? JSON.parse(text) as UpdatePasswordResult : null;
+    } catch {
+        data = null;
+    }
+
+    if (!res.ok) {
+        throw data ?? { status: res.status, errors: 'Erro ao alterar senha.' };
+    }
+
+    return data ?? { status: res.status };
+}
+
+// (8) Solicitar reset logado
+export async function requestPasswordResetLogged(token: string): Promise<void> {
+    const res = await fetch(`${BASE_URL}/api/user/password-reset/request-logged`, {
+        method: 'POST',
+        headers: buildHeaders(token)
+    });
+
+    await handleResponse<{ status: number; mensagemSucesso?: string }>(res);
+}
+
+export class ApiError extends Error {
+  status: number;
+  errors?: Record<string, string>;
+  constructor(message: string, status: number, errors?: Record<string, string>) {
+    super(message);
+    this.status = status;
+    this.errors = errors;
+  }
+}
+
+const API_BASE = import.meta.env.VITE_API_URL ?? ""; 
+// ✅ Se seu projeto usa outro nome (ex: VITE_API_BASE), troque aqui.
+
+function getAccessToken(): string | null {
+  // ✅ Ajuste para a MESMA estratégia de segurança já implementada no seu projeto.
+  // Deixe somente a chave correta do seu projeto quando souber.
+  const possibleKeys = ["TokenAcesso", "accessToken", "token"];
+  for (const k of possibleKeys) {
+    const v = localStorage.getItem(k);
+    if (v) return v;
+  }
+  return null;
+}
+
+async function requestJson<T>(path: string, init: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+    ...init,
+  });
+
+  const isJson = (res.headers.get("content-type") || "").includes("application/json");
+  const data: any = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
+
+  if (!res.ok) {
+    const message =
+      data?.message ||
+      (typeof data === "string" && data) ||
+      "Erro na requisição. Tente novamente.";
+    const errors = data?.errors;
+    throw new ApiError(message, res.status, errors);
+  }
+
+  return data as T;
+}
+
+// (2) Reenviar código
+export async function resendUserCode(email: string): Promise<void> {
+  await requestJson<void>("/api/user/resend-code", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+// (4) Esqueci minha senha
+export async function requestPasswordReset(email: string): Promise<void> {
+    const res = await fetch(`${BASE_URL}/api/user/password-reset/request`, {
+        method: 'POST',
+        headers: buildHeaders(),
+        body: JSON.stringify({ email })
+    });
+
+    await handleResponse<{ status: number; mensagemSucesso?: string }>(res);
+}
+
+// (5) Redefinir senha (token)
+export async function confirmPasswordReset(token: string, novaSenha: string, confirmarNovaSenha: string): Promise<void> {
+  await requestJson<void>("/api/user/password-reset/confirm", {
+    method: "POST",
+    body: JSON.stringify({ token, novaSenha, confirmarNovaSenha }),
+  });
+}
+
+// (6) Redefinir senha (código fallback)
+export async function confirmPasswordResetByCode(
+  email: string,
+  codigo: string,
+  novaSenha: string,
+  confirmarNovaSenha: string
+): Promise<void> {
+  await requestJson<void>("/api/user/password-reset/confirm-code", {
+    method: "POST",
+    body: JSON.stringify({ email, codigo, novaSenha, confirmarNovaSenha }),
+  });
+}
+
+// (7) Alterar senha (logado)
+export async function updatePasswordLogged(
+  senhaAtual: string,
+  novaSenha: string,
+  confirmarNovaSenha: string
+): Promise<{ requiresReauth: boolean }> {
+  const token = getAccessToken();
+  if (!token) throw new ApiError("Sessão expirada. Faça login novamente.", 401);
+
+  return await requestJson<{ requiresReauth: boolean }>("/api/user/profile/update-password", {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ senhaAtual, novaSenha, confirmarNovaSenha }),
+  });
+}
+
+async function handleDetailedResponse<T>(res: Response): Promise<T> {
+    const text = await res.text();
+    let data: any = null;
+
+    try {
+        data = text ? JSON.parse(text) : null;
+    } catch {
+        data = text;
+    }
+
+    if (!res.ok) {
+        const errors = data?.errors ?? data?.mensagem ?? data ?? res.statusText;
+        const message =
+            typeof errors === 'string'
+                ? errors
+                : 'Erro na requisição.';
+
+        throw new ApiError(message, res.status, errors);
+    }
+
+    return data as T;
 }
