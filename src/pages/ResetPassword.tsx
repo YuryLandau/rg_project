@@ -1,7 +1,7 @@
 // src/pages/ResetPassword.tsx
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Head } from "../components/layout/Head";
 import { Section } from "../components/ui/Section";
 import { Container } from "../components/ui/Container";

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { SiteLayout } from './components/layout/SiteLayout';
 import { RequireAuth } from './context/AuthContext';
 import { Home } from './pages/Home';
@@ -7,7 +7,6 @@ import { Downloads } from './pages/Downloads';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Profile } from './pages/Profile';
-import { Payment } from './pages/Payment';
 import { Subscribe } from './pages/Subscribe';
 import { PaymentSuccess } from './pages/PaymentSuccess';
 import { PaymentCanceled } from './pages/PaymentCanceled';
@@ -68,7 +67,7 @@ export const router = createBrowserRouter([
                 path: 'payment',
                 element: (
                     <RequireAuth>
-                        <Payment />
+                        <Navigate to="/subscribe" replace />
                     </RequireAuth>
                 )
             },

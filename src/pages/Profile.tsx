@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
-import { cancelSubscription } from '../services/api';
+import { manageSubscription } from '../services/api';
 import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
@@ -16,16 +16,19 @@ export const Profile = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handleCancelSubscription = async () => {
-        if (!accessToken) return;
-        try {
-            await cancelSubscription(accessToken);
-            await refreshProfile();
-            alert('Assinatura cancelada.');
-        } catch (e: any) {
-            alert(e?.message || 'Erro ao cancelar assinatura');
-        }
-    };
+    const handleManageSubscription = async () => {
+    if (!accessToken) {
+        navigate('/login');
+        return;
+    }
+
+    try {
+        const url = await manageSubscription(accessToken);
+        window.location.href = url;
+    } catch (e: any) {
+        alert(e?.message || 'Erro ao abrir o portal da assinatura');
+    }
+};
 
     return (
         <>
@@ -67,15 +70,17 @@ export const Profile = () => {
                                         <span className="text-primary font-semibold uppercase text-sm">{user?.plan || 'Free'}</span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button type="button" className="cursor-pointer" variant="primary" size="small" onClick={() => navigate('/subscribe')} fullWidth>
-                                            {user?.plan === 'premium' ? 'Ver Planos' : 'Mudar de Plano'}
-                                        </Button>
-                                        {user?.plan === 'premium' && (
-                                            <Button type="button" variant="outline" size="small" onClick={handleCancelSubscription} fullWidth>
-                                                Cancelar Assinatura
-                                            </Button>
-                                        )}
-                                    </div>
+    <Button
+        type="button"
+        className="cursor-pointer"
+        variant="primary"
+        size="small"
+        onClick={() => user?.plan === 'premium' ? handleManageSubscription() : navigate('/subscribe')}
+        fullWidth
+    >
+        {user?.plan === 'premium' ? 'Gerenciar assinatura' : 'Mudar de Plano'}
+    </Button>
+</div>
                                 </div>
 
                                 <Button

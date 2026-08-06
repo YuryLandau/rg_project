@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Section } from '../../components/ui/Section';
 import { Container } from '../../components/ui/Container';
 import { Button } from '../../components/ui/Button';

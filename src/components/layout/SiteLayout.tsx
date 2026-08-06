@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useNavigate } from 'react-router';
 import { useState } from 'react';
 import { Header } from '../sections/Header';
 import { Footer } from '../sections/Footer';

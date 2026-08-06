@@ -1,7 +1,7 @@
 // src/pages/ChangePassword.tsx
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { Head } from "../components/layout/Head";
 import { Section } from "../components/ui/Section";
@@ -11,7 +11,7 @@ import { ApiError, updatePasswordLogged } from "../services/api";
 
 export const ChangePassword = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, accessToken } = useAuth();
 
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
@@ -40,7 +40,7 @@ export const ChangePassword = () => {
 
     setLoading(true);
     try {
-      const resp = await updatePasswordLogged(senhaAtual, novaSenha, confirmar);
+      const resp = await updatePasswordLogged(accessToken ?? "", senhaAtual, novaSenha, confirmar);
 
       if (resp?.requiresReauth) {
         // (PDF) deslogar e redirecionar

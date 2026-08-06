@@ -2,7 +2,6 @@ import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
-import { getPluginDownloadLinks } from '../services/api';
 
 type TutorialVideo = {
     id: string;

@@ -1,7 +1,7 @@
 // src/pages/ForgotPassword.tsx
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom"; // ✅ add useNavigate
+import { Link, useNavigate } from "react-router"; // ✅ add useNavigate
 import { Head } from "../components/layout/Head";
 import { Section } from "../components/ui/Section";
 import { Container } from "../components/ui/Container";

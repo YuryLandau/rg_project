@@ -26,7 +26,8 @@ interface ProfileResponseWrapper {
         id: string;
         email: string;
         nome?: string;
-        funcao?: string; // Premium | Comum | Admin
+        funcao?: string;
+        tipoConta?: string;
     };
 }
 
@@ -112,17 +113,38 @@ export async function manageSubscription(token: string) {
     return data.urlStripe;
 }
 
-export async function cancelSubscription(token: string) {
-    const res = await fetch(`${BASE_URL}/api/user/cancel-subscription`, {
-        method: 'DELETE',
-        headers: buildHeaders(token)
-    });
-    if (!res.ok) throw new Error('Falha ao cancelar assinatura');
+export interface PluginDownloadDto {
+    key: string;
+    nome?: string;
+    versao?: string;
+    canal?: string;
+    arquivo?: string;
+    sha256?: string | null;
+    tamanhoBytes?: number | null;
+    atualizacaoObrigatoria?: boolean;
+    notasVersao?: string | null;
+    revit?: string[];
+    autoCad?: boolean;
+    url: string;
+    year?: number;
 }
 
 export interface PluginDownloadLinksResponse {
     status: number;
-    plugins: Array<{ key: string; url: string; year?: number }>;
+    plugins: PluginDownloadDto[];
+}
+
+export interface PluginSignedUrlResponse {
+    status: number;
+    plugin: {
+        key: string;
+        nome?: string;
+        versao?: string;
+        arquivo?: string;
+        sha256?: string | null;
+        tamanhoBytes?: number | null;
+        url: string;
+    };
 }
 
 export async function getPluginDownloadLinks(token: string) {
@@ -130,6 +152,14 @@ export async function getPluginDownloadLinks(token: string) {
         headers: buildHeaders(token)
     });
     return handleResponse<PluginDownloadLinksResponse>(res);
+}
+
+export async function getPluginSignedUrl(token: string, key: string) {
+    const encodedKey = encodeURIComponent(key);
+    const res = await fetch(`${BASE_URL}/api/plugin/download/${encodedKey}/signed-url`, {
+        headers: buildHeaders(token)
+    });
+    return handleResponse<PluginSignedUrlResponse>(res);
 }
 
 export async function downloadProductFile(token: string, material: string, name?: string) {
@@ -152,9 +182,19 @@ export function mapFuncaoParaPlano(funcao?: string): string {
 
 // -------- Plugins helpers (frontend-only normalization) --------
 export interface PluginItem {
-    key: string; // e.g., Plugin2025
-    year?: number; // e.g., 2025
-    url: string; // absolute URL to download endpoint
+    key: string;
+    nome?: string;
+    versao?: string;
+    canal?: string;
+    arquivo?: string;
+    sha256?: string | null;
+    tamanhoBytes?: number | null;
+    atualizacaoObrigatoria?: boolean;
+    notasVersao?: string | null;
+    revit?: string[];
+    autoCad?: boolean;
+    year?: number;
+    url: string;
 }
 
 export function extractYearFromKey(key: string): number | undefined {
@@ -164,13 +204,37 @@ export function extractYearFromKey(key: string): number | undefined {
     return Number.isFinite(y) ? y : undefined;
 }
 
+function extractLatestSupportedYear(plugin: PluginDownloadDto): number | undefined {
+    const years = plugin.revit
+        ?.map((version) => Number(version))
+        .filter((version) => Number.isFinite(version));
+
+    if (!years?.length) return undefined;
+
+    return Math.max(...years);
+}
+
 export function normalizePluginLinks(response: PluginDownloadLinksResponse | undefined | null): PluginItem[] {
     if (!response || !Array.isArray(response.plugins)) return [];
-    const items: PluginItem[] = response.plugins.map(p => ({
-        key: p.key,
-        year: p.year ?? extractYearFromKey(p.key),
-        url: p.url
-    }));
+    const items: PluginItem[] = response.plugins.map(p => {
+        const year = p.year ?? extractYearFromKey(p.key) ?? extractLatestSupportedYear(p);
+
+        return {
+            key: p.key,
+            nome: p.nome,
+            versao: p.versao,
+            canal: p.canal,
+            arquivo: p.arquivo,
+            sha256: p.sha256,
+            tamanhoBytes: p.tamanhoBytes,
+            atualizacaoObrigatoria: p.atualizacaoObrigatoria,
+            notasVersao: p.notasVersao,
+            revit: p.revit,
+            autoCad: p.autoCad,
+            year,
+            url: p.url
+        };
+    });
     // Sort by year desc, fallback to name
     items.sort((a, b) => (b.year ?? -Infinity) - (a.year ?? -Infinity) || a.key.localeCompare(b.key));
     return items;
@@ -234,22 +298,8 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE = import.meta.env.VITE_API_URL ?? ""; 
-// ✅ Se seu projeto usa outro nome (ex: VITE_API_BASE), troque aqui.
-
-function getAccessToken(): string | null {
-  // ✅ Ajuste para a MESMA estratégia de segurança já implementada no seu projeto.
-  // Deixe somente a chave correta do seu projeto quando souber.
-  const possibleKeys = ["TokenAcesso", "accessToken", "token"];
-  for (const k of possibleKeys) {
-    const v = localStorage.getItem(k);
-    if (v) return v;
-  }
-  return null;
-}
-
 async function requestJson<T>(path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
       ...(init.headers ?? {}),
@@ -314,21 +364,23 @@ export async function confirmPasswordResetByCode(
 
 // (7) Alterar senha (logado)
 export async function updatePasswordLogged(
+  accessToken: string,
   senhaAtual: string,
   novaSenha: string,
   confirmarNovaSenha: string
 ): Promise<{ requiresReauth: boolean }> {
-  const token = getAccessToken();
-  if (!token) throw new ApiError("Sessão expirada. Faça login novamente.", 401);
+  if (!accessToken) {
+    throw new ApiError("Sessão expirada. Faça login novamente.", 401);
+  }
 
   return await requestJson<{ requiresReauth: boolean }>("/api/user/profile/update-password", {
     method: "PATCH",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ senhaAtual, novaSenha, confirmarNovaSenha }),
   });
 }
 
-async function handleDetailedResponse<T>(res: Response): Promise<T> {
+export async function handleDetailedResponse<T>(res: Response): Promise<T> {
     const text = await res.text();
     let data: any = null;
 

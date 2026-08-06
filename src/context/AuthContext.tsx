@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 import type { ReactNode } from 'react';
 import { login as apiLogin, logout as apiLogout, getProfile, mapFuncaoParaPlano } from '../services/api';
 
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 id: perfil.id,
                 email: perfil.email,
                 name: perfil.nome,
-                plan: mapFuncaoParaPlano(perfil.funcao)
+                plan: mapFuncaoParaPlano(perfil.funcao ?? perfil.tipoConta)
             };
             setUser(mapped);
             persist(mapped, resp.tokenAcesso, resp.refreshToken);
@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 id: perfil.id,
                 email: perfil.email,
                 name: perfil.nome,
-                plan: mapFuncaoParaPlano(perfil.funcao)
+                plan: mapFuncaoParaPlano(perfil.funcao ?? perfil.tipoConta)
             };
             setUser(mapped);
             persist(mapped, accessToken, refreshToken);
