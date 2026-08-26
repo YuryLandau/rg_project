@@ -39,7 +39,7 @@ export const SiteLayout = () => {
         try {
             const url = await manageSubscription(accessToken);
             // Frontend redireciona para Stripe
-            window.location.href = url;
+            window.location.assign(url);
         } catch (e: any) {
             alert(e?.message || 'Erro ao gerenciar assinatura');
         }

@@ -1,5 +1,5 @@
 // src/pages/RequestPasswordResetLogged.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { Head } from "../components/layout/Head";
@@ -13,13 +13,17 @@ export const RequestPasswordResetLogged = () => {
   const { user, accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
+useEffect(() => {
   if (!user) {
     navigate("/login");
-    return null;
   }
+}, [navigate, user]);
 
-  const [error, setError] = useState("");
+if (!user) {
+  return null;
+}
 
 const handleClick = async () => {
   setError("");
@@ -53,7 +57,7 @@ const handleClick = async () => {
               {!sent ? (
                 <>
                   <p className="text-center text-gray-600 mb-6">
-                    Clique no botão abaixo para receber o link de redefinição.
+                    Clique no botão abaixo para receber o código de redefinição.
                   </p>
                   
                   {error && (
@@ -73,7 +77,7 @@ const handleClick = async () => {
               ) : (
                 <>
                   <p className="text-center text-gray-600 mb-6">
-                    Confira seu e-mail. Se este e-mail existir e estiver apto, enviaremos o link.
+                    Confira seu e-mail. Se este e-mail existir e estiver apto, enviaremos o código.
                   </p>
                   <div className="flex flex-col gap-3">
                     <Button variant="primary" size="large" fullWidth onClick={() => navigate("/profile")}>

@@ -1,7 +1,7 @@
 // src/pages/ForgotPassword.tsx
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router"; // ✅ add useNavigate
+import { Link, useNavigate } from "react-router";
 import { Head } from "../components/layout/Head";
 import { Section } from "../components/ui/Section";
 import { Container } from "../components/ui/Container";
@@ -43,7 +43,7 @@ export const ForgotPassword = () => {
 
               {!sent ? (
                 <>
-                  <p className="text-center text-gray-600 mb-6">Informe seu e-mail para receber o link de redefinição.</p>
+                  <p className="text-center text-gray-600 mb-6">Informe seu e-mail para receber o código de redefinição.</p>
 
                   {error && (
                     <div className="p-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm text-center mb-4" role="alert">
@@ -66,7 +66,7 @@ export const ForgotPassword = () => {
                     </div>
 
                     <Button type="submit" variant="primary" size="large" disabled={loading} fullWidth>
-                      {loading ? "Enviando..." : "Enviar link"}
+                      {loading ? "Enviando..." : "Enviar código"}
                     </Button>
 
                     <p className="text-center text-sm text-gray-600">
@@ -77,7 +77,7 @@ export const ForgotPassword = () => {
               ) : (
                 <>
                   <p className="text-center text-gray-600 mb-6">
-                    Se este e-mail existir, enviaremos um link de redefinição. Confira sua caixa de entrada.
+                    Se este e-mail existir, enviaremos um código de redefinição. Confira sua caixa de entrada.
                   </p>
 
                   <div className="flex flex-col gap-3">

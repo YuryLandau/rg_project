@@ -6,6 +6,7 @@ import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
+import { PasswordField } from '../components/ui/PasswordField';
 
 export const Login = () => {
     const [email, setEmail] = useState('');
@@ -63,18 +64,16 @@ export const Login = () => {
                                     />
                                 </div>
 
-                                <div className="form-group">
-                                    <label htmlFor="password">Senha</label>
-                                    <input
-                                        type="password"
-                                        id="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        required
-                                        disabled={loading}
-                                    />
-                                </div>
+                                <PasswordField
+                                    label="Senha"
+                                    id="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Senha"
+                                    autoComplete="current-password"
+                                    required
+                                    disabled={loading}
+                                />
 
                                 {error && (
                                     <div className="p-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm text-center" role="alert">

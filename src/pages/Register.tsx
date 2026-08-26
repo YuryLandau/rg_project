@@ -5,6 +5,7 @@ import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
+import { PasswordField } from '../components/ui/PasswordField';
 import { registerUser, validateUserCode } from '../services/api';
 
 export const Register = () => {
@@ -96,14 +97,26 @@ export const Register = () => {
                                         <label htmlFor="email">Email</label>
                                         <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" required disabled={loading} />
                                     </div>
-                                    <div className="form-group">
-                                        <label htmlFor="senha">Senha</label>
-                                        <input id="senha" type="password" value={senha} onChange={e => setSenha(e.target.value)} placeholder="Senha" required disabled={loading} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="senhaConfirmacao">Confirmar Senha</label>
-                                        <input id="senhaConfirmacao" type="password" value={senhaConfirmacao} onChange={e => setSenhaConfirmacao(e.target.value)} placeholder="Repita a senha" required disabled={loading} />
-                                    </div>
+                                    <PasswordField
+                                        label="Senha"
+                                        id="senha"
+                                        value={senha}
+                                        onChange={e => setSenha(e.target.value)}
+                                        placeholder="Senha"
+                                        autoComplete="new-password"
+                                        required
+                                        disabled={loading}
+                                    />
+                                    <PasswordField
+                                        label="Confirmar Senha"
+                                        id="senhaConfirmacao"
+                                        value={senhaConfirmacao}
+                                        onChange={e => setSenhaConfirmacao(e.target.value)}
+                                        placeholder="Repita a senha"
+                                        autoComplete="new-password"
+                                        required
+                                        disabled={loading}
+                                    />
                                     <Button type="submit" variant="primary" size="large" disabled={loading} fullWidth>
                                         {loading ? 'Enviando...' : 'Enviar Código'}
                                     </Button>

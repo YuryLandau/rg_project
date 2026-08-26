@@ -84,7 +84,7 @@ export const ResetPasswordCode = () => {
                 </Button>
 
                 <p className="text-center text-sm text-gray-600">
-                  Precisa do link? <Link to="/forgot-password" className="text-primary font-semibold">Solicitar reset</Link>
+                  Precisa de outro código? <Link to="/forgot-password" className="text-primary font-semibold">Solicitar reset</Link>
                 </p>
               </form>
             </div>

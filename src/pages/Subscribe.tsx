@@ -75,7 +75,7 @@ export const Subscribe = () => {
         try {
             const url = await startSubscription(accessToken);
             // Frontend redireciona para Stripe
-            window.location.href = url;
+            window.location.assign(url);
         } catch (e: any) {
             setSelectedPlan(null);
             alert(e?.message || 'Erro ao iniciar assinatura');
