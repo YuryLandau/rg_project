@@ -1,7 +1,7 @@
 // src/pages/RequestPasswordResetLogged.tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { Head } from "../components/layout/Head";
 import { Section } from "../components/ui/Section";
 import { Container } from "../components/ui/Container";

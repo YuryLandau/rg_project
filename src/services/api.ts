@@ -1,3 +1,11 @@
+import {
+    clearStoredSession,
+    getJwtExpirationMs,
+    readStoredTokens,
+    readStoredUser,
+    saveStoredTokens,
+} from './authSession';
+
 // API client centralizado para integração com backend RGBim
 // Usa fetch nativo. Base URL pode ser configurada via Vite: VITE_API_BASE_URL
 // Cai para http://localhost:5000 se variável não estiver definida.
@@ -8,6 +16,11 @@ export const API_BASE_URL = BASE_URL;
 interface LoginResponse {
     tokenAcesso: string;
     refreshToken: string;
+}
+
+interface RefreshTokenResponse {
+    status: number;
+    resultado: LoginResponse;
 }
 
 interface RegisterResponse {
@@ -51,6 +64,123 @@ async function handleResponse<T>(res: Response): Promise<T> {
     return data as T;
 }
 
+let refreshRequest: Promise<string> | null = null;
+
+async function performTokenRefresh(): Promise<string> {
+    const user = readStoredUser();
+    const tokens = readStoredTokens();
+
+    if (!user || !tokens) {
+        clearStoredSession();
+        throw new ApiError('Sessão expirada. Faça login novamente.', 401);
+    }
+
+    const refreshTokenUsed = tokens.refreshToken;
+    const response = await fetch(`${BASE_URL}/api/user/refresh-token`, {
+        method: 'POST',
+        headers: buildHeaders(),
+        body: JSON.stringify({
+            idUsuario: user.id,
+            refreshToken: refreshTokenUsed,
+        }),
+    });
+
+    if (!response.ok) {
+        const currentTokens = readStoredTokens();
+
+        // Outra aba pode ter rotacionado o token enquanto esta chamada estava em andamento.
+        if (currentTokens && currentTokens.refreshToken !== refreshTokenUsed) {
+            return currentTokens.accessToken;
+        }
+
+        if ([400, 401, 403].includes(response.status)) {
+            clearStoredSession();
+            throw new ApiError('Sessão expirada. Faça login novamente.', response.status);
+        }
+
+        throw new ApiError('Não foi possível renovar a sessão. Tente novamente.', response.status);
+    }
+
+    const data = await handleResponse<RefreshTokenResponse>(response);
+    const refreshed = data.resultado;
+
+    if (!refreshed?.tokenAcesso || !refreshed.refreshToken) {
+        clearStoredSession();
+        throw new ApiError('Resposta inválida ao renovar a sessão.', 500);
+    }
+
+    // Não restaura uma sessão que tenha sido encerrada durante a renovação.
+    const currentTokens = readStoredTokens();
+    if (!currentTokens) {
+        throw new ApiError('Sessão encerrada.', 401);
+    }
+
+    if (currentTokens.refreshToken !== refreshTokenUsed) {
+        return currentTokens.accessToken;
+    }
+
+    saveStoredTokens({
+        accessToken: refreshed.tokenAcesso,
+        refreshToken: refreshed.refreshToken,
+    });
+
+    return refreshed.tokenAcesso;
+}
+
+export function refreshAccessToken(): Promise<string> {
+    if (!refreshRequest) {
+        refreshRequest = performTokenRefresh().finally(() => {
+            refreshRequest = null;
+        });
+    }
+
+    return refreshRequest;
+}
+
+export async function getFreshAccessToken(minimumValiditySeconds = 60): Promise<string> {
+    const tokens = readStoredTokens();
+    if (!tokens) {
+        throw new ApiError('Sessão expirada. Faça login novamente.', 401);
+    }
+
+    const expirationMs = getJwtExpirationMs(tokens.accessToken);
+    const minimumExpirationMs = Date.now() + minimumValiditySeconds * 1000;
+
+    if (expirationMs === null || expirationMs > minimumExpirationMs) {
+        return tokens.accessToken;
+    }
+
+    return refreshAccessToken();
+}
+
+async function authenticatedFetch(
+    path: string,
+    init: RequestInit = {},
+    fallbackAccessToken?: string,
+): Promise<Response> {
+    const storedAccessToken = readStoredTokens()?.accessToken;
+    let accessToken = fallbackAccessToken ?? storedAccessToken;
+
+    const execute = (token: string | undefined) => {
+        const headers = new Headers(init.headers);
+        if (token) headers.set('Authorization', `Bearer ${token}`);
+
+        return fetch(`${BASE_URL}${path}`, { ...init, headers });
+    };
+
+    const response = await execute(accessToken);
+    if (response.status !== 401) return response;
+
+    const newestAccessToken = readStoredTokens()?.accessToken;
+    if (newestAccessToken && newestAccessToken !== accessToken) {
+        accessToken = newestAccessToken;
+    } else {
+        accessToken = await refreshAccessToken();
+    }
+
+    return execute(accessToken);
+}
+
 export async function login(email: string, password: string): Promise<LoginResponse> {
     const res = await fetch(`${BASE_URL}/api/user/login`, {
         method: 'POST',
@@ -80,35 +210,35 @@ export async function validateUserCode(email: string, codigo: string): Promise<V
 
 export async function logout(token: string): Promise<void> {
     // Endpoint não exige body
-    const res = await fetch(`${BASE_URL}/api/user/logout`, {
+    const res = await authenticatedFetch('/api/user/logout', {
         method: 'POST',
         headers: buildHeaders(token)
-    });
+    }, token);
     if (!res.ok) throw new Error('Falha ao deslogar');
 }
 
 export async function getProfile(token: string) {
-    const res = await fetch(`${BASE_URL}/api/user/profile`, {
+    const res = await authenticatedFetch('/api/user/profile', {
         headers: buildHeaders(token)
-    });
+    }, token);
     const data = await handleResponse<ProfileResponseWrapper>(res);
     return data.mensagemSucesso;
 }
 
 export async function startSubscription(token: string) {
-    const res = await fetch(`${BASE_URL}/api/user/checkout/subscribe`, {
+    const res = await authenticatedFetch('/api/user/checkout/subscribe', {
         method: 'POST',
         headers: buildHeaders(token)
-    });
+    }, token);
     const data = await handleResponse<{ status: number; urlStripe: string }>(res);
     return data.urlStripe;
 }
 
 export async function manageSubscription(token: string) {
-    const res = await fetch(`${BASE_URL}/api/user/manage-subscription`, {
+    const res = await authenticatedFetch('/api/user/manage-subscription', {
         method: 'POST',
         headers: buildHeaders(token)
-    });
+    }, token);
     const data = await handleResponse<{ status: number; urlStripe: string }>(res);
     return data.urlStripe;
 }
@@ -148,25 +278,26 @@ export interface PluginSignedUrlResponse {
 }
 
 export async function getPluginDownloadLinks(token: string) {
-    const res = await fetch(`${BASE_URL}/api/plugin/download-links`, {
+    const res = await authenticatedFetch('/api/plugin/download-links', {
         headers: buildHeaders(token)
-    });
+    }, token);
     return handleResponse<PluginDownloadLinksResponse>(res);
 }
 
 export async function getPluginSignedUrl(token: string, key: string) {
     const encodedKey = encodeURIComponent(key);
-    const res = await fetch(`${BASE_URL}/api/plugin/download/${encodedKey}/signed-url`, {
+    const res = await authenticatedFetch(`/api/plugin/download/${encodedKey}/signed-url`, {
         headers: buildHeaders(token)
-    });
+    }, token);
     return handleResponse<PluginSignedUrlResponse>(res);
 }
 
 export async function downloadProductFile(token: string, material: string, name?: string) {
-    const url = new URL(`${BASE_URL}/api/produto/file`);
-    url.searchParams.set('material', material);
-    if (name) url.searchParams.set('name', name);
-    const res = await fetch(url.toString(), { headers: buildHeaders(token, {}) });
+    const search = new URLSearchParams({ material });
+    if (name) search.set('name', name);
+    const res = await authenticatedFetch(`/api/produto/file?${search.toString()}`, {
+        headers: buildHeaders(token, {})
+    }, token);
     if (!res.ok) throw new Error('Arquivo não encontrado ou acesso negado');
     const blob = await res.blob();
     return blob;
@@ -249,18 +380,18 @@ export type UpdatePasswordResult = {
   status: number;
   mensagemSucesso?: string;
   requiresReauth?: boolean;
-  errors?: any;
+  errors?: unknown;
 };
 
 export async function updateUserPassword(
     accessToken: string,
     payload: { senhaAtual: string; novaSenha: string; confirmarNovaSenha: string }
 ): Promise<UpdatePasswordResult> {
-    const res = await fetch(`${BASE_URL}/api/user/profile/update-password`, {
+    const res = await authenticatedFetch('/api/user/profile/update-password', {
         method: 'PATCH',
         headers: buildHeaders(accessToken),
         body: JSON.stringify(payload)
-    });
+    }, accessToken);
 
     const text = await res.text();
     let data: UpdatePasswordResult | null = null;
@@ -280,10 +411,10 @@ export async function updateUserPassword(
 
 // (8) Solicitar reset logado
 export async function requestPasswordResetLogged(token: string): Promise<void> {
-    const res = await fetch(`${BASE_URL}/api/user/password-reset/request-logged`, {
+    const res = await authenticatedFetch('/api/user/password-reset/request-logged', {
         method: 'POST',
         headers: buildHeaders(token)
-    });
+    }, token);
 
     await handleResponse<{ status: number; mensagemSucesso?: string }>(res);
 }
@@ -298,25 +429,51 @@ export class ApiError extends Error {
   }
 }
 
-async function requestJson<T>(path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object'
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function asFieldErrors(value: unknown): Record<string, string> | undefined {
+  const record = asRecord(value);
+  if (!record) return undefined;
+
+  return Object.fromEntries(
+    Object.entries(record).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  );
+}
+
+export function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+async function requestJson<T>(path: string, init: RequestInit, accessToken?: string): Promise<T> {
+  const requestInit: RequestInit = {
+    ...init,
     headers: {
       "Content-Type": "application/json",
       ...(init.headers ?? {}),
     },
-    ...init,
-  });
+  };
+
+  const res = accessToken
+    ? await authenticatedFetch(path, requestInit, accessToken)
+    : await fetch(`${BASE_URL}${path}`, requestInit);
 
   const isJson = (res.headers.get("content-type") || "").includes("application/json");
-  const data: any = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
+  const data: unknown = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
 
   if (!res.ok) {
+    const dataRecord = asRecord(data);
+    const rawMessage = dataRecord?.message;
+    const rawErrors = dataRecord?.errors;
     const message =
-      data?.message ||
+      (typeof rawMessage === 'string' && rawMessage) ||
+      (typeof rawErrors === 'string' && rawErrors) ||
       (typeof data === "string" && data) ||
       "Erro na requisição. Tente novamente.";
-    const errors = data?.errors;
-    throw new ApiError(message, res.status, errors);
+    throw new ApiError(message, res.status, asFieldErrors(rawErrors));
   }
 
   return data as T;
@@ -377,12 +534,12 @@ export async function updatePasswordLogged(
     method: "PATCH",
     headers: { Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ senhaAtual, novaSenha, confirmarNovaSenha }),
-  });
+  }, accessToken);
 }
 
 export async function handleDetailedResponse<T>(res: Response): Promise<T> {
     const text = await res.text();
-    let data: any = null;
+    let data: unknown = null;
 
     try {
         data = text ? JSON.parse(text) : null;
@@ -391,13 +548,14 @@ export async function handleDetailedResponse<T>(res: Response): Promise<T> {
     }
 
     if (!res.ok) {
-        const errors = data?.errors ?? data?.mensagem ?? data ?? res.statusText;
+        const dataRecord = asRecord(data);
+        const errors = dataRecord?.errors ?? dataRecord?.mensagem ?? data ?? res.statusText;
         const message =
             typeof errors === 'string'
                 ? errors
                 : 'Erro na requisição.';
 
-        throw new ApiError(message, res.status, errors);
+        throw new ApiError(message, res.status, asFieldErrors(errors));
     }
 
     return data as T;

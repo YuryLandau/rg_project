@@ -14,7 +14,7 @@ export const VerifyEmail = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  const emailFromState = (location.state as any)?.email as string | undefined;
+  const emailFromState = (location.state as { email?: string } | null)?.email;
   const emailFromQuery = searchParams.get("email") || "";
   const initialEmail = emailFromState || emailFromQuery;
 
@@ -51,7 +51,7 @@ export const VerifyEmail = () => {
       await validateUserCode(email, codigo);
       setInfo("E-mail verificado com sucesso! Redirecionando para o login...");
       setTimeout(() => navigate("/login", { state: { message: "E-mail verificado. Faça login." } }), 900);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 403) {
         setBlocked(true);
         setError("Acesso restrito no ambiente de testes.");

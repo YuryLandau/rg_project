@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
+import { getErrorMessage } from '../services/api';
 import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
@@ -30,8 +31,8 @@ export const Login = () => {
             const success = await login(email, password);
             if (success) navigate('/profile');
             else setError('Email ou senha inválidos');
-        } catch (e: any) {
-            setError(e?.message || 'Erro ao fazer login. Tente novamente.');
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, 'Erro ao fazer login. Tente novamente.'));
         } finally {
             setLoading(false);
         }

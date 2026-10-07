@@ -6,7 +6,7 @@ import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { DwgUnificadoSection } from '../components/sections/DwgUnificadoSection';
 import { Head } from '../components/layout/Head';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getPluginDownloadLinks, latestPlugin, normalizePluginLinks } from '../services/api';
 
 export const Home = () => {

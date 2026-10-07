@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '../context/AuthContext';
-import { manageSubscription } from '../services/api';
+import { useAuth } from '../context/useAuth';
+import { getErrorMessage, manageSubscription } from '../services/api';
 import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
@@ -25,8 +25,8 @@ export const Profile = () => {
     try {
         const url = await manageSubscription(accessToken);
         window.location.href = url;
-    } catch (e: any) {
-        alert(e?.message || 'Erro ao abrir o portal da assinatura');
+    } catch (error: unknown) {
+        alert(getErrorMessage(error, 'Erro ao abrir o portal da assinatura'));
     }
 };
 

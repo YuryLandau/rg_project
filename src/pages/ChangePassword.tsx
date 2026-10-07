@@ -2,7 +2,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { Head } from "../components/layout/Head";
 import { Section } from "../components/ui/Section";
 import { Container } from "../components/ui/Container";
@@ -50,7 +50,7 @@ export const ChangePassword = () => {
       }
 
       navigate("/profile", { state: { message: "Senha atualizada." } });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof ApiError) {
         // (PDF) erros por campo
         if (err.status === 400 && err.errors) {

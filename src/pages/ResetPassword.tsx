@@ -38,7 +38,7 @@ export const ResetPassword = () => {
       await confirmPasswordReset(token, novaSenha, confirmar);
       setInfo("Senha redefinida com sucesso! Redirecionando para o login...");
       setTimeout(() => navigate("/login", { state: { message: "Senha redefinida. Faça login." } }), 900);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 400) {
         setError("Link inválido/expirado ou nova senha igual à atual.");
       } else {

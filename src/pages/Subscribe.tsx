@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '../context/AuthContext';
-import { startSubscription } from '../services/api';
+import { useAuth } from '../context/useAuth';
+import { getErrorMessage, startSubscription } from '../services/api';
 import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
@@ -76,9 +76,9 @@ export const Subscribe = () => {
             const url = await startSubscription(accessToken);
             // Frontend redireciona para Stripe
             window.location.assign(url);
-        } catch (e: any) {
+        } catch (error: unknown) {
             setSelectedPlan(null);
-            alert(e?.message || 'Erro ao iniciar assinatura');
+            alert(getErrorMessage(error, 'Erro ao iniciar assinatura'));
             await refreshProfile();
         }
     };

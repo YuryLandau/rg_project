@@ -1,29 +1,26 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Navigate } from 'react-router';
 import type { ReactNode } from 'react';
-import { login as apiLogin, logout as apiLogout, getProfile, mapFuncaoParaPlano } from '../services/api';
-
-interface User {
-    id: string;
-    email: string;
-    name?: string;
-    plan?: string; // free | premium | admin
-}
-
-interface AuthContextValue {
-    user: User | null;
-    loading: boolean;
-    login: (email: string, password: string) => Promise<boolean>;
-    logout: () => Promise<void>;
-    refreshProfile: () => Promise<void>;
-    updateProfileLocal: (data: Partial<User>) => void;
-    accessToken: string | null;
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-const STORAGE_USER_KEY = 'auth:user';
-const STORAGE_TOKEN_KEY = 'auth:tokens';
+import {
+    getFreshAccessToken,
+    getProfile,
+    login as apiLogin,
+    logout as apiLogout,
+    mapFuncaoParaPlano,
+    refreshAccessToken,
+} from '../services/api';
+import {
+    clearStoredSession,
+    getJwtExpirationMs,
+    readStoredTokens,
+    readStoredUser,
+    saveStoredSession,
+    saveStoredUser,
+    subscribeToStoredSession,
+} from '../services/authSession';
+import { AuthContext } from './auth-context';
+import type { AuthContextValue, User } from './auth-context';
+import { useAuth } from './useAuth';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -31,31 +28,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [refreshToken, setRefreshToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const rawUser = localStorage.getItem(STORAGE_USER_KEY);
-        const rawTokens = localStorage.getItem(STORAGE_TOKEN_KEY);
-        if (rawTokens) {
-            try {
-                const parsed = JSON.parse(rawTokens);
-                setAccessToken(parsed.accessToken || null);
-                setRefreshToken(parsed.refreshToken || null);
-            } catch { /* ignore */ }
+    const syncSessionFromStorage = useCallback(() => {
+        const storedUser = readStoredUser();
+        const storedTokens = readStoredTokens();
+
+        if (!storedUser || !storedTokens) {
+            setUser(null);
+            setAccessToken(null);
+            setRefreshToken(null);
+            return;
         }
-        if (rawUser) {
-            try {
-                const parsed: User = JSON.parse(rawUser);
-                Promise.resolve().then(() => setUser(parsed));
-            } catch { /* ignore */ }
-        }
-        Promise.resolve().then(() => setLoading(false));
+
+        setUser(storedUser);
+        setAccessToken(storedTokens.accessToken);
+        setRefreshToken(storedTokens.refreshToken);
     }, []);
 
-    const persist = (u: User | null, at?: string | null, rt?: string | null) => {
-        if (u) localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(u));
-        else localStorage.removeItem(STORAGE_USER_KEY);
-        if (at && rt) localStorage.setItem(STORAGE_TOKEN_KEY, JSON.stringify({ accessToken: at, refreshToken: rt }));
-        else if (!at) localStorage.removeItem(STORAGE_TOKEN_KEY);
-    };
+    useEffect(() => {
+        let active = true;
+        const unsubscribe = subscribeToStoredSession(() => {
+            if (active) syncSessionFromStorage();
+        });
+
+        const restoreSession = async () => {
+            const storedUser = readStoredUser();
+            const storedTokens = readStoredTokens();
+
+            if (!storedUser || !storedTokens) {
+                clearStoredSession();
+            } else {
+                syncSessionFromStorage();
+
+                try {
+                    await getFreshAccessToken();
+                    if (active) syncSessionFromStorage();
+                } catch {
+                    // Falhas transitórias preservam a sessão; tokens inválidos já são removidos pelo cliente da API.
+                    if (active) syncSessionFromStorage();
+                }
+            }
+
+            if (active) setLoading(false);
+        };
+
+        void restoreSession();
+
+        return () => {
+            active = false;
+            unsubscribe();
+        };
+    }, [syncSessionFromStorage]);
+
+    useEffect(() => {
+        if (!user || !accessToken || !refreshToken) return;
+
+        const expirationMs = getJwtExpirationMs(accessToken);
+        if (expirationMs === null) return;
+
+        const refreshInMs = Math.max(0, expirationMs - Date.now() - 60_000);
+        const maximumTimeoutMs = 2_147_000_000;
+        const timer = window.setTimeout(() => {
+            void refreshAccessToken().catch(() => undefined);
+        }, Math.min(refreshInMs, maximumTimeoutMs));
+
+        return () => window.clearTimeout(timer);
+    }, [user, accessToken, refreshToken]);
+
+    const persist = useCallback((u: User | null, at?: string | null, rt?: string | null) => {
+        if (u && at && rt) {
+            saveStoredSession(u, { accessToken: at, refreshToken: rt });
+        } else if (u) {
+            saveStoredUser(u);
+        } else {
+            clearStoredSession();
+        }
+    }, []);
 
     const login = async (email: string, password: string) => {
         if (!email || !password) return false;
@@ -82,13 +129,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logout = async () => {
         try {
             if (accessToken) await apiLogout(accessToken);
-        } catch (e) {
+        } catch {
             // ignore network errors
         } finally {
             setUser(null);
             setAccessToken(null);
             setRefreshToken(null);
-            persist(null, null, null);
+            clearStoredSession();
         }
     };
 
@@ -107,7 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (e) {
             console.error('Erro ao atualizar perfil', e);
         }
-    }, [accessToken, refreshToken]);
+    }, [accessToken, refreshToken, persist]);
 
     const updateProfileLocal = (data: Partial<User>) => {
         setUser(prev => {
@@ -120,12 +167,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const value: AuthContextValue = { user, loading, login, logout, refreshProfile, updateProfileLocal, accessToken };
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => {
-    const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-    return ctx;
 };
 
 export const RequireAuth = ({ children }: { children: ReactNode }) => {

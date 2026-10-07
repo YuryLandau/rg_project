@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Header } from '../sections/Header';
 import { Footer } from '../sections/Footer';
 import { Button } from '../ui/Button';
-import { useAuth } from '../../context/AuthContext';
-import { manageSubscription } from '../../services/api';
+import { useAuth } from '../../context/useAuth';
+import { getErrorMessage, manageSubscription } from '../../services/api';
 
 /**
  * SiteLayout - Layout principal do site
@@ -40,8 +40,8 @@ export const SiteLayout = () => {
             const url = await manageSubscription(accessToken);
             // Frontend redireciona para Stripe
             window.location.assign(url);
-        } catch (e: any) {
-            alert(e?.message || 'Erro ao gerenciar assinatura');
+        } catch (error: unknown) {
+            alert(getErrorMessage(error, 'Erro ao gerenciar assinatura'));
         }
     };
 

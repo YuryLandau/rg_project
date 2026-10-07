@@ -4,7 +4,7 @@ import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getPluginDownloadLinks, getPluginSignedUrl, normalizePluginLinks, type PluginItem } from '../services/api';
 
 export const Downloads = () => {

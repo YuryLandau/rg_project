@@ -31,7 +31,7 @@ export const ResetPasswordCode = () => {
     try {
       await confirmPasswordResetByCode(email, codigo, novaSenha, confirmar);
       navigate("/login", { state: { message: "Senha redefinida. Faça login." } });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 400) {
         setError("Código inválido/expirado ou senha igual à atual.");
       } else {
