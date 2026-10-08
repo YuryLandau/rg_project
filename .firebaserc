@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "rgbim-a6ed5",
+    "prod": "rgbim-a6ed5"
+  },
+  "targets": {},
+  "etags": {}
+}
