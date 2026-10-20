@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { HeroSection } from '../components/sections/HeroSection';
 import { Section } from '../components/ui/Section';
@@ -6,33 +5,8 @@ import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { DwgUnificadoSection } from '../components/sections/DwgUnificadoSection';
 import { Head } from '../components/layout/Head';
-import { useAuth } from '../context/useAuth';
-import { getPluginDownloadLinks, latestPlugin, normalizePluginLinks } from '../services/api';
 
 export const Home = () => {
-    const { accessToken } = useAuth();
-    const [heroVersion, setHeroVersion] = useState<string | undefined>(undefined);
-
-    useEffect(() => {
-        let active = true;
-        async function loadLatest() {
-            if (!accessToken) {
-                setHeroVersion(undefined);
-                return;
-            }
-            try {
-                const raw = await getPluginDownloadLinks(accessToken);
-                if (!active) return;
-                const items = normalizePluginLinks(raw);
-                const lp = latestPlugin(items);
-                setHeroVersion(lp?.year ? String(lp.year) : undefined);
-            } catch {
-                if (active) setHeroVersion(undefined);
-            }
-        }
-        loadLatest();
-        return () => { active = false; };
-    }, [accessToken]);
     return (
         <>
             <Head
@@ -45,7 +19,6 @@ export const Home = () => {
                 description="Biblioteca + Automação para acelerar documentação técnica no Revit. Exportações unificadas e verificação inteligente de tubulações."
                 backgroundImage="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2072"
                 overlay={true}
-                version={heroVersion}
                 downloadHref="/downloads"
                 videoSrc="/images/video_3.mp4"
                 alignment="left"
@@ -53,12 +26,12 @@ export const Home = () => {
                     <>
                         <Link to="/downloads">
                             <Button variant="primary" size="large">
-                                Baixar Agora
+                                Downloads em breve
                             </Button>
                         </Link>
                         <Link to="/subscribe">
                             <Button variant="secondary" size="large">
-                                Ver Planos
+                                Planos em breve
                             </Button>
                         </Link>
                     </>
@@ -273,7 +246,7 @@ export const Home = () => {
                                     </div>
                                     <div className="text-left">
                                         <h3 className="text-2xl font-bold text-gray-900">Plugin RG BIM Tools</h3>
-                                        <p className="text-gray-600">Compatível com Revit {heroVersion ?? '2025+'} • veja todas as versões</p>
+                                        <p className="text-gray-600">Instaladores e versões em preparação</p>
                                     </div>
                                 </div>
                                 <div className="space-y-3 text-left mb-6">
@@ -288,12 +261,12 @@ export const Home = () => {
                                 <div className="flex flex-col sm:flex-row gap-4">
                                     <Link to="/downloads" className="flex-1">
                                         <Button variant="primary" size="large" fullWidth>
-                                            Baixar Agora
+                                            Acompanhar disponibilidade
                                         </Button>
                                     </Link>
                                     <Link to="/downloads" className="flex-1">
                                         <Button variant="outline" size="large" fullWidth>
-                                            Ver Todas as Versões
+                                            Saiba mais
                                         </Button>
                                     </Link>
                                 </div>
@@ -343,7 +316,7 @@ export const Home = () => {
                                 <div className="mt-8">
                                     <Link to="/subscribe">
                                         <Button variant="outline" size="large" fullWidth>
-                                            Começar Grátis
+                                            Disponível em breve
                                         </Button>
                                     </Link>
                                 </div>
@@ -398,7 +371,7 @@ export const Home = () => {
                                 <div className="mt-8">
                                     <Link to="/subscribe">
                                         <Button variant="primary" size="large" fullWidth>
-                                            Assinar Premium
+                                            Disponível em breve
                                         </Button>
                                     </Link>
                                 </div>

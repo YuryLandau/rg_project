@@ -21,7 +21,7 @@ export const DwgUnificadoSection: React.FC = () => {
                             </p>
                             <div className="mt-6">
                                 <Link to="/subscribe">
-                                    <Button variant="primary" size="large">Ver Planos</Button>
+                                    <Button variant="primary" size="large">Planos em breve</Button>
                                 </Link>
                             </div>
                         </div>

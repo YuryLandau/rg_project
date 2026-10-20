@@ -17,6 +17,20 @@ import { ResetPasswordCode } from './pages/ResetPasswordCode';
 import { ChangePassword } from './pages/ChangePassword';
 import { RequestPasswordResetLogged } from './pages/RequestPasswordResetLogged';
 import { TutoriaisPlugin } from './pages/TutoriaisPlugin';
+import { ComingSoon } from './pages/ComingSoon';
+import { featureFlags, featureMessages } from './config/features';
+
+const authenticationUnavailable = (
+    <ComingSoon title="Área do cliente" message={featureMessages.authentication} />
+);
+
+const subscriptionsUnavailable = (
+    <ComingSoon title="Planos e assinaturas" message={featureMessages.subscriptions} />
+);
+
+const downloadsUnavailable = (
+    <ComingSoon title="Downloads" message={featureMessages.downloads} />
+);
 
 export const router = createBrowserRouter([
     {
@@ -33,7 +47,9 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'downloads',
-                element: <Downloads />
+                element: featureFlags.authenticationEnabled && featureFlags.downloadsEnabled
+                    ? <Downloads />
+                    : downloadsUnavailable
             },
             {
                 path: 'tutoriais-plugins',
@@ -41,60 +57,66 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'login',
-                element: <Login />
+                element: featureFlags.authenticationEnabled ? <Login /> : authenticationUnavailable
             },
             {
                 path: 'register',
-                element: <Register />
+                element: featureFlags.authenticationEnabled ? <Register /> : authenticationUnavailable
             },
-            { path: 'verify-email', element: <VerifyEmail /> },
-            { path: 'forgot-password', element: <ForgotPassword /> },
-            { path: 'reset-password', element: <ResetPassword /> },
-            { path: 'reset-password-code', element: <ResetPasswordCode /> },
+            { path: 'verify-email', element: featureFlags.authenticationEnabled ? <VerifyEmail /> : authenticationUnavailable },
+            { path: 'forgot-password', element: featureFlags.authenticationEnabled ? <ForgotPassword /> : authenticationUnavailable },
+            { path: 'reset-password', element: featureFlags.authenticationEnabled ? <ResetPassword /> : authenticationUnavailable },
+            { path: 'reset-password-code', element: featureFlags.authenticationEnabled ? <ResetPasswordCode /> : authenticationUnavailable },
             {
                 path: 'subscribe',
-                element: <Subscribe />
+                element: featureFlags.authenticationEnabled && featureFlags.subscriptionsEnabled
+                    ? <Subscribe />
+                    : subscriptionsUnavailable
             },
             {
                 path: 'profile',
-                element: (
+                element: featureFlags.authenticationEnabled ? (
                     <RequireAuth>
                         <Profile />
                     </RequireAuth>
-                )
+                ) : authenticationUnavailable
             },
             {
                 path: 'payment',
-                element: (
+                element: featureFlags.authenticationEnabled && featureFlags.subscriptionsEnabled ? (
                     <RequireAuth>
                         <Navigate to="/subscribe" replace />
                     </RequireAuth>
-                )
+                ) : subscriptionsUnavailable
             },
             {
                 path: 'change-password',
-                element: (
+                element: featureFlags.authenticationEnabled ? (
                     <RequireAuth>
                         <ChangePassword />
                     </RequireAuth>
-                )
+                ) : authenticationUnavailable
             },
             {
                 path: 'request-password-reset-logged',
-                element: (
+                element: featureFlags.authenticationEnabled ? (
                     <RequireAuth>
                         <RequestPasswordResetLogged />
                     </RequireAuth>
-                )
+                ) : authenticationUnavailable
             },
             // Rotas de retorno de gateway (case-sensitive conforme backend)
             {
                 path: 'Payment/sucesso',
-                element: <PaymentSuccess />
+                element: featureFlags.authenticationEnabled && featureFlags.subscriptionsEnabled
+                    ? <PaymentSuccess />
+                    : subscriptionsUnavailable
             },
             {
                 path: 'Payment/cancelado',
-                element: <PaymentCanceled />
+                element: featureFlags.authenticationEnabled && featureFlags.subscriptionsEnabled
+                    ? <PaymentCanceled />
+                    : subscriptionsUnavailable
             },
             {
                 path: '*',

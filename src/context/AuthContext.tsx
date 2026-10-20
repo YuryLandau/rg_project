@@ -21,6 +21,7 @@ import {
 import { AuthContext } from './auth-context';
 import type { AuthContextValue, User } from './auth-context';
 import { useAuth } from './useAuth';
+import { featureFlags } from '../config/features';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -45,6 +46,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     useEffect(() => {
+        if (!featureFlags.authenticationEnabled) {
+            clearStoredSession();
+            setUser(null);
+            setAccessToken(null);
+            setRefreshToken(null);
+            setLoading(false);
+            return;
+        }
+
         let active = true;
         const unsubscribe = subscribeToStoredSession(() => {
             if (active) syncSessionFromStorage();
@@ -80,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, [syncSessionFromStorage]);
 
     useEffect(() => {
+        if (!featureFlags.authenticationEnabled) return;
         if (!user || !accessToken || !refreshToken) return;
 
         const expirationMs = getJwtExpirationMs(accessToken);
@@ -105,6 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const login = async (email: string, password: string) => {
+        if (!featureFlags.authenticationEnabled) return false;
         if (!email || !password) return false;
         try {
             const resp = await apiLogin(email, password);
@@ -128,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const logout = async () => {
         try {
-            if (accessToken) await apiLogout(accessToken);
+            if (featureFlags.authenticationEnabled && accessToken) await apiLogout(accessToken);
         } catch {
             // ignore network errors
         } finally {
@@ -140,6 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const refreshProfile = useCallback(async () => {
+        if (!featureFlags.authenticationEnabled) return;
         if (!accessToken) return;
         try {
             const perfil = await getProfile(accessToken);
@@ -174,7 +187,7 @@ export const RequireAuth = ({ children }: { children: ReactNode }) => {
 
     if (loading) return <div style={{ padding: '2rem' }}>Carregando...</div>;
 
-    if (!user) {
+    if (!featureFlags.authenticationEnabled || !user) {
         return <Navigate to="/login" replace />;
     }
 

@@ -15,11 +15,11 @@ export const About = () => {
 
             <Section padding="lg">
                 <Container size="medium">
-                    <div className="prose prose-lg max-w-none">
+                    <div className="max-w-none font-sans">
                         <h1 className="text-4xl font-bold text-gray-900 mb-6">Sobre o RG BIM</h1>
 
-                        <div className="space-y-6 text-gray-700 leading-relaxed">
-                            <p className="text-xl">
+                        <div className="space-y-6 font-sans text-lg font-normal text-gray-700 leading-relaxed">
+                            <p>
                                 <strong className="text-primary">RG BIM</strong> é uma ferramenta completa desenvolvida pela RG Projetos,
                                 especializada em otimizar o fluxo de trabalho de projetos industriais no Revit.
                             </p>

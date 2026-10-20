@@ -5,6 +5,7 @@ import { Footer } from '../sections/Footer';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/useAuth';
 import { getErrorMessage, manageSubscription } from '../../services/api';
+import { featureFlags, featureMessages } from '../../config/features';
 
 /**
  * SiteLayout - Layout principal do site
@@ -14,6 +15,8 @@ export const SiteLayout = () => {
     const { user, accessToken, logout } = useAuth();
     const navigate = useNavigate();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const subscriptionsEnabled =
+        featureFlags.authenticationEnabled && featureFlags.subscriptionsEnabled;
 
     const handleLogout = () => {
         logout();
@@ -22,7 +25,7 @@ export const SiteLayout = () => {
 
     const handleManageSubscription = async () => {
         if (!subscriptionsEnabled) {
-            alert(subscriptionsDisabledMessage);
+            alert(featureMessages.subscriptions);
             setUserMenuOpen(false);
             return;
         }
@@ -74,13 +77,7 @@ export const SiteLayout = () => {
         { label: 'Tutoriais', href: '/tutoriais-plugins' }
     ];
 
-    const subscriptionsEnabled = import.meta.env.VITE_SUBSCRIPTIONS_ENABLED === 'true';
-
-    const subscriptionsDisabledMessage =
-        import.meta.env.VITE_SUBSCRIPTIONS_DISABLED_MESSAGE ||
-        'As assinaturas Premium serão liberadas em breve.';
-
-    const actions = user ? (
+    const authenticatedActions = user ? (
         <div className="relative">
             <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -125,7 +122,7 @@ export const SiteLayout = () => {
 
                                 if (!subscriptionsEnabled) {
                                     e.preventDefault();
-                                    alert(subscriptionsDisabledMessage);
+                                    alert(featureMessages.subscriptions);
                                 }
                             }}
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
@@ -146,6 +143,12 @@ export const SiteLayout = () => {
     ) : (
         <Link to="/login">
             <Button variant="primary" size="small">Login</Button>
+        </Link>
+    );
+
+    const actions = featureFlags.authenticationEnabled ? authenticatedActions : (
+        <Link to="/login">
+            <Button variant="outline" size="small">Acesso em breve</Button>
         </Link>
     );
 
