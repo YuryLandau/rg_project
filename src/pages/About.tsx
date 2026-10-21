@@ -48,7 +48,7 @@ export const About = () => {
                             <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">Precisão Técnica</h2>
                             <p>
                                 Todas as famílias são desenvolvidas com base em catálogos reais de fabricantes líderes do mercado como
-                                <strong>Val Aço</strong>, <strong>Tigre</strong>, <strong>Saint Gobain</strong>, <strong>Joplas</strong>, entre outros,
+                                <strong> Val Aço</strong>, <strong>Tigre</strong>, <strong>Saint Gobain</strong>, <strong>Joplas</strong>, entre outros,
                                 garantindo precisão técnica e conformidade com normas do setor.
                             </p>
 

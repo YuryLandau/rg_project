@@ -190,23 +190,21 @@ export const SiteLayout = () => {
                     {
                         title: 'Empresa',
                         links: [
-                            { label: 'Sobre', href: '#' },
-                            { label: 'Contato', href: '#' }
+                            { label: 'Sobre', href: '/about' },
+                            { label: 'Contato', href: 'mailto:contato@rgprojeto.com.br' }
                         ]
                     },
                     {
                         title: 'Recursos',
                         links: [
-                            { label: 'Downloads', href: '/downloads' },
-                            { label: 'Documentação', href: '#' }
+                            { label: 'Downloads', href: '/downloads' }
                         ]
                     }
                 ]}
                 social={[
-                    { platform: 'LinkedIn', href: '#', icon: 'in' },
-                    { platform: 'Twitter', href: '#', icon: '𝕏' }
+                    { platform: 'LinkedIn', href: 'https://www.linkedin.com/company/rg-desenhos/', icon: 'in' }
                 ]}
-                bottomText="© 2025 RG. Todos os direitos reservados."
+                bottomText={`© ${new Date().getFullYear()} RG. Todos os direitos reservados.`}
             />
         </div>
     );
