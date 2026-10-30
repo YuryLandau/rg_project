@@ -1,4 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router';
+import { legalDocuments } from '../../config/legalDocuments';
 import { useState } from 'react';
 import { Header } from '../sections/Header';
 import { Footer } from '../sections/Footer';
@@ -191,6 +192,8 @@ export const SiteLayout = () => {
                         title: 'Empresa',
                         links: [
                             { label: 'Sobre', href: '/about' },
+                            { label: 'Termos de Uso', href: legalDocuments.terms.route },
+                            { label: 'Política de Privacidade', href: legalDocuments.privacy.route },
                             { label: 'Contato', href: 'mailto:contato@rgprojeto.com.br' }
                         ]
                     },

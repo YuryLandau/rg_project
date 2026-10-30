@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 
 interface FooterColumn {
     title: string;
@@ -73,9 +74,11 @@ export const Footer: React.FC<FooterProps> = ({
                                     <ul className="space-y-2">
                                         {column.links.map((link, linkIndex) => (
                                             <li key={linkIndex}>
-                                                <a href={link.href} className="text-gray-400 hover:text-primary transition-colors duration-200">
-                                                    {link.label}
-                                                </a>
+                                                {link.href.startsWith('/') && !link.href.startsWith('//') ? (
+                                                    <Link to={link.href} className="text-gray-400 hover:text-primary transition-colors duration-200">{link.label}</Link>
+                                                ) : (
+                                                    <a href={link.href} className="text-gray-400 hover:text-primary transition-colors duration-200">{link.label}</a>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>

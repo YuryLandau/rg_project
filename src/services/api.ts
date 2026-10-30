@@ -2,20 +2,19 @@ import {
     clearStoredSession,
     getJwtExpirationMs,
     readStoredTokens,
-    readStoredUser,
+    getSessionGeneration,
     saveStoredTokens,
 } from './authSession';
 
 // API client centralizado para integração com backend RGBim
 // Usa fetch nativo. Base URL pode ser configurada via Vite: VITE_API_BASE_URL
-// Cai para http://localhost:5000 se variável não estiver definida.
+// Cookies Secure exigem HTTPS, inclusive no ambiente de desenvolvimento.
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:5000';
 export const API_BASE_URL = BASE_URL;
 
 interface LoginResponse {
     tokenAcesso: string;
-    refreshToken: string;
 }
 
 interface RefreshTokenResponse {
@@ -66,33 +65,15 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
 let refreshRequest: Promise<string> | null = null;
 
-async function performTokenRefresh(): Promise<string> {
-    const user = readStoredUser();
-    const tokens = readStoredTokens();
-
-    if (!user || !tokens) {
-        clearStoredSession();
-        throw new ApiError('Sessão expirada. Faça login novamente.', 401);
-    }
-
-    const refreshTokenUsed = tokens.refreshToken;
+async function performTokenRefresh(generation: number): Promise<string> {
+    if (generation !== getSessionGeneration()) throw new ApiError('Sessão encerrada.', 401);
     const response = await fetch(`${BASE_URL}/api/user/refresh-token`, {
         method: 'POST',
-        headers: buildHeaders(),
-        body: JSON.stringify({
-            idUsuario: user.id,
-            refreshToken: refreshTokenUsed,
-        }),
+        credentials: 'include',
+        headers: buildHeaders(undefined, { 'X-Refresh-Transport': 'cookie' }),
     });
-
+    if (generation !== getSessionGeneration()) throw new ApiError('Sessão encerrada.', 401);
     if (!response.ok) {
-        const currentTokens = readStoredTokens();
-
-        // Outra aba pode ter rotacionado o token enquanto esta chamada estava em andamento.
-        if (currentTokens && currentTokens.refreshToken !== refreshTokenUsed) {
-            return currentTokens.accessToken;
-        }
-
         if ([400, 401, 403].includes(response.status)) {
             clearStoredSession();
             throw new ApiError('Sessão expirada. Faça login novamente.', response.status);
@@ -104,32 +85,28 @@ async function performTokenRefresh(): Promise<string> {
     const data = await handleResponse<RefreshTokenResponse>(response);
     const refreshed = data.resultado;
 
-    if (!refreshed?.tokenAcesso || !refreshed.refreshToken) {
+    if (!refreshed?.tokenAcesso) {
         clearStoredSession();
         throw new ApiError('Resposta inválida ao renovar a sessão.', 500);
     }
 
-    // Não restaura uma sessão que tenha sido encerrada durante a renovação.
-    const currentTokens = readStoredTokens();
-    if (!currentTokens) {
+    // Não restaura uma sessão encerrada enquanto a requisição estava em andamento.
+    if (generation !== getSessionGeneration()) {
         throw new ApiError('Sessão encerrada.', 401);
     }
-
-    if (currentTokens.refreshToken !== refreshTokenUsed) {
-        return currentTokens.accessToken;
-    }
-
-    saveStoredTokens({
-        accessToken: refreshed.tokenAcesso,
-        refreshToken: refreshed.refreshToken,
-    });
-
+    saveStoredTokens({ accessToken: refreshed.tokenAcesso });
     return refreshed.tokenAcesso;
 }
 
 export function refreshAccessToken(): Promise<string> {
     if (!refreshRequest) {
-        refreshRequest = performTokenRefresh().finally(() => {
+        const generation = getSessionGeneration();
+        refreshRequest = (async () => {
+            if (navigator.locks) {
+                return await navigator.locks.request('rgbim:refresh', () => performTokenRefresh(generation));
+            }
+            return performTokenRefresh(generation);
+        })().finally(() => {
             refreshRequest = null;
         });
     }
@@ -140,7 +117,7 @@ export function refreshAccessToken(): Promise<string> {
 export async function getFreshAccessToken(minimumValiditySeconds = 60): Promise<string> {
     const tokens = readStoredTokens();
     if (!tokens) {
-        throw new ApiError('Sessão expirada. Faça login novamente.', 401);
+        return refreshAccessToken();
     }
 
     const expirationMs = getJwtExpirationMs(tokens.accessToken);
@@ -165,7 +142,7 @@ async function authenticatedFetch(
         const headers = new Headers(init.headers);
         if (token) headers.set('Authorization', `Bearer ${token}`);
 
-        return fetch(`${BASE_URL}${path}`, { ...init, headers });
+        return fetch(`${BASE_URL}${path}`, { ...init, credentials: 'include', headers });
     };
 
     const response = await execute(accessToken);
@@ -184,17 +161,29 @@ async function authenticatedFetch(
 export async function login(email: string, password: string): Promise<LoginResponse> {
     const res = await fetch(`${BASE_URL}/api/user/login`, {
         method: 'POST',
-        headers: buildHeaders(),
+        credentials: 'include',
+        headers: buildHeaders(undefined, { 'X-Refresh-Transport': 'cookie' }),
         body: JSON.stringify({ email, senha: password })
     });
     return handleResponse<LoginResponse>(res);
 }
 
-export async function registerUser(nome: string, email: string, senha: string, senhaConfirmacao: string): Promise<RegisterResponse> {
+export interface RegisterRequest {
+    nome: string;
+    email: string;
+    senha: string;
+    senhaConfirmacao: string;
+    aceitouTermosDeUso: boolean;
+    versaoTermosDeUso: string;
+    confirmouLeituraPoliticaPrivacidade: boolean;
+    versaoPoliticaPrivacidade: string;
+}
+
+export async function registerUser(payload: RegisterRequest): Promise<RegisterResponse> {
     const res = await fetch(`${BASE_URL}/api/user/register`, {
         method: 'POST',
         headers: buildHeaders(),
-        body: JSON.stringify({ nome, email, senha, senhaConfirmacao })
+        body: JSON.stringify(payload)
     });
     return handleResponse<RegisterResponse>(res);
 }
@@ -212,7 +201,7 @@ export async function logout(token: string): Promise<void> {
     // Endpoint não exige body
     const res = await authenticatedFetch('/api/user/logout', {
         method: 'POST',
-        headers: buildHeaders(token)
+        headers: buildHeaders(token, { 'X-Refresh-Transport': 'cookie' })
     }, token);
     if (!res.ok) throw new Error('Falha ao deslogar');
 }

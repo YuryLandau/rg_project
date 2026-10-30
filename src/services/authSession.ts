@@ -1,6 +1,5 @@
 export interface StoredTokens {
     accessToken: string;
-    refreshToken: string;
 }
 
 export interface StoredUser {
@@ -14,15 +13,18 @@ export const AUTH_USER_STORAGE_KEY = 'auth:user';
 export const AUTH_TOKEN_STORAGE_KEY = 'auth:tokens';
 
 const AUTH_SESSION_CHANGED_EVENT = 'auth:session-changed';
+let memoryTokens: StoredTokens | null = null;
+let sessionGeneration = 0;
+// Remove credenciais persistidas por versões anteriores, sem reutilizá-las.
+localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+export function getSessionGeneration(): number { return sessionGeneration; }
 
 function isStoredTokens(value: unknown): value is StoredTokens {
     if (!value || typeof value !== 'object') return false;
 
     const candidate = value as Partial<StoredTokens>;
     return typeof candidate.accessToken === 'string'
-        && candidate.accessToken.length > 0
-        && typeof candidate.refreshToken === 'string'
-        && candidate.refreshToken.length > 0;
+        && candidate.accessToken.length > 0;
 }
 
 function isStoredUser(value: unknown): value is StoredUser {
@@ -40,15 +42,7 @@ function notifySessionChanged(): void {
 }
 
 export function readStoredTokens(): StoredTokens | null {
-    const raw = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-    if (!raw) return null;
-
-    try {
-        const parsed: unknown = JSON.parse(raw);
-        return isStoredTokens(parsed) ? parsed : null;
-    } catch {
-        return null;
-    }
+    return memoryTokens;
 }
 
 export function readStoredUser(): StoredUser | null {
@@ -65,7 +59,7 @@ export function readStoredUser(): StoredUser | null {
 
 export function saveStoredSession(user: StoredUser, tokens: StoredTokens): void {
     localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
-    localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+    memoryTokens = isStoredTokens(tokens) ? tokens : null;
     notifySessionChanged();
 }
 
@@ -75,11 +69,13 @@ export function saveStoredUser(user: StoredUser): void {
 }
 
 export function saveStoredTokens(tokens: StoredTokens): void {
-    localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+    memoryTokens = isStoredTokens(tokens) ? tokens : null;
     notifySessionChanged();
 }
 
 export function clearStoredSession(): void {
+    memoryTokens = null;
+    sessionGeneration++;
     localStorage.removeItem(AUTH_USER_STORAGE_KEY);
     localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
     notifySessionChanged();
@@ -88,6 +84,10 @@ export function clearStoredSession(): void {
 export function subscribeToStoredSession(listener: () => void): () => void {
     const handleStorage = (event: StorageEvent) => {
         if (event.key === AUTH_USER_STORAGE_KEY || event.key === AUTH_TOKEN_STORAGE_KEY) {
+            if (event.newValue === null) {
+                memoryTokens = null;
+                sessionGeneration++;
+            }
             listener();
         }
     };

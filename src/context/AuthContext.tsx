@@ -12,6 +12,7 @@ import {
 import {
     clearStoredSession,
     getJwtExpirationMs,
+    getSessionGeneration,
     readStoredTokens,
     readStoredUser,
     saveStoredSession,
@@ -26,7 +27,6 @@ import { featureFlags } from '../config/features';
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [accessToken, setAccessToken] = useState<string | null>(null);
-    const [refreshToken, setRefreshToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const syncSessionFromStorage = useCallback(() => {
@@ -36,13 +36,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!storedUser || !storedTokens) {
             setUser(null);
             setAccessToken(null);
-            setRefreshToken(null);
             return;
         }
 
         setUser(storedUser);
         setAccessToken(storedTokens.accessToken);
-        setRefreshToken(storedTokens.refreshToken);
     }, []);
 
     useEffect(() => {
@@ -50,7 +48,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             clearStoredSession();
             setUser(null);
             setAccessToken(null);
-            setRefreshToken(null);
             setLoading(false);
             return;
         }
@@ -61,23 +58,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
 
         const restoreSession = async () => {
-            const storedUser = readStoredUser();
-            const storedTokens = readStoredTokens();
-
-            if (!storedUser || !storedTokens) {
-                clearStoredSession();
-            } else {
-                syncSessionFromStorage();
-
-                try {
-                    await getFreshAccessToken();
-                    if (active) syncSessionFromStorage();
-                } catch {
-                    // Falhas transitórias preservam a sessão; tokens inválidos já são removidos pelo cliente da API.
-                    if (active) syncSessionFromStorage();
+            const generation = getSessionGeneration();
+            try {
+                const token = await getFreshAccessToken();
+                const perfil = await getProfile(token);
+                if (active && generation === getSessionGeneration()) {
+                    saveStoredSession({
+                        id: perfil.id,
+                        email: perfil.email,
+                        name: perfil.nome,
+                        plan: mapFuncaoParaPlano(perfil.funcao ?? perfil.tipoConta),
+                    }, { accessToken: token });
+                    syncSessionFromStorage();
                 }
+            } catch {
+                if (active) syncSessionFromStorage();
             }
-
             if (active) setLoading(false);
         };
 
@@ -91,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         if (!featureFlags.authenticationEnabled) return;
-        if (!user || !accessToken || !refreshToken) return;
+        if (!user || !accessToken) return;
 
         const expirationMs = getJwtExpirationMs(accessToken);
         if (expirationMs === null) return;
@@ -103,11 +99,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }, Math.min(refreshInMs, maximumTimeoutMs));
 
         return () => window.clearTimeout(timer);
-    }, [user, accessToken, refreshToken]);
+    }, [user, accessToken]);
 
-    const persist = useCallback((u: User | null, at?: string | null, rt?: string | null) => {
-        if (u && at && rt) {
-            saveStoredSession(u, { accessToken: at, refreshToken: rt });
+    const persist = useCallback((u: User | null, at?: string | null) => {
+        if (u && at) {
+            saveStoredSession(u, { accessToken: at });
         } else if (u) {
             saveStoredUser(u);
         } else {
@@ -118,10 +114,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = async (email: string, password: string) => {
         if (!featureFlags.authenticationEnabled) return false;
         if (!email || !password) return false;
+        clearStoredSession();
         try {
             const resp = await apiLogin(email, password);
             setAccessToken(resp.tokenAcesso);
-            setRefreshToken(resp.refreshToken);
             const perfil = await getProfile(resp.tokenAcesso);
             const mapped: User = {
                 id: perfil.id,
@@ -130,7 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 plan: mapFuncaoParaPlano(perfil.funcao ?? perfil.tipoConta)
             };
             setUser(mapped);
-            persist(mapped, resp.tokenAcesso, resp.refreshToken);
+            persist(mapped, resp.tokenAcesso);
             return true;
         } catch (e) {
             console.error(e);
@@ -146,7 +142,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setUser(null);
             setAccessToken(null);
-            setRefreshToken(null);
             clearStoredSession();
         }
     };
@@ -163,17 +158,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 plan: mapFuncaoParaPlano(perfil.funcao ?? perfil.tipoConta)
             };
             setUser(mapped);
-            persist(mapped, accessToken, refreshToken);
+            persist(mapped, accessToken);
         } catch (e) {
             console.error('Erro ao atualizar perfil', e);
         }
-    }, [accessToken, refreshToken, persist]);
+    }, [accessToken, persist]);
 
     const updateProfileLocal = (data: Partial<User>) => {
         setUser(prev => {
             if (!prev) return prev;
             const updated = { ...prev, ...data };
-            persist(updated, accessToken, refreshToken);
+            persist(updated, accessToken);
             return updated;
         });
     };

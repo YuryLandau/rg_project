@@ -2,6 +2,9 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { SiteLayout } from './components/layout/SiteLayout';
 import { RequireAuth } from './context/AuthContext';
 import { Home } from './pages/Home';
+import { TermsOfUse } from './pages/TermsOfUse';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { legalDocuments } from './config/legalDocuments';
 import { About } from './pages/About';
 import { Downloads } from './pages/Downloads';
 import { Login } from './pages/Login';
@@ -37,6 +40,8 @@ export const router = createBrowserRouter([
         path: '/',
         element: <SiteLayout />,
         children: [
+            { path: legalDocuments.terms.route, element: <TermsOfUse /> },
+            { path: legalDocuments.privacy.route, element: <PrivacyPolicy /> },
             {
                 index: true,
                 element: <Home />

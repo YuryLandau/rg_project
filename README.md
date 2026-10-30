@@ -9,17 +9,17 @@ Currently, two official plugins are available:
 
 ## Integração com Backend RGBim
 
-Esta aplicação agora consome a API .NET (porta padrão `http://localhost:5000`).
+Esta aplicação agora consome a API .NET (porta padrão `https://localhost:5000`).
 
 ### Variáveis de Ambiente (opcional)
 Defina `VITE_API_BASE_URL` em um arquivo `.env` ou `.env.development` para apontar para outro host.
 
 ```
-VITE_API_BASE_URL=http://localhost:5000
+VITE_API_BASE_URL=https://localhost:5000
 ```
 
 ### Fluxos Principais
-- Login: `POST /api/user/login` armazena `tokenAcesso` e `refreshToken`.
+- Login: `POST /api/user/login` mantém o access token somente em memória e recebe o refresh token em cookie HttpOnly, Secure e SameSite=None.
 - Perfil: `GET /api/user/profile` retorna dados e função (`Comum`, `Premium`, `Admin`). Função é mapeada para plano (`free`, `premium`, `admin`).
 - Assinatura: `POST /api/user/checkout/subscribe` retorna `urlStripe` e frontend redireciona.
 - Cancelamento: `DELETE /api/user/cancel-subscription` remove assinatura.
@@ -31,8 +31,13 @@ VITE_API_BASE_URL=http://localhost:5000
 - `AuthContext`: Gerencia tokens e usuário; substituiu mock anterior.
 - Páginas adaptadas: `Login`, `Subscribe`, `Profile`, `Downloads`.
 
+### Segurança da sessão
+- A sessão é restaurada pelo cookie ao recarregar; o refresh é rotacionado automaticamente e as abas coordenam a renovação pela Web Locks API quando disponível.
+- Login, refresh e logout usam `credentials: include` e `X-Refresh-Transport: cookie`. O refresh não é exposto ao JavaScript.
+- Configure a origem exata do frontend em `Cors:AllowedOrigins` da API. Use HTTPS no backend, inclusive no desenvolvimento (`dotnet run --launch-profile https`).
+- Em produção, prefira frontend e API sob o mesmo site (por exemplo, app.exemplo.com e api.exemplo.com), pois navegadores podem bloquear cookies de terceiros entre sites diferentes.
+
 ### Ajustes Futuramente Recomendados
-- Implementar renovação automática de `refreshToken` quando expirar o acesso.
 - Unificar tratamento de erros e toasts.
 - Adicionar indicador de carregamento global.
 - Adicionar rota de sucesso do Stripe no frontend e ajustar `SuccessUrl` no backend.

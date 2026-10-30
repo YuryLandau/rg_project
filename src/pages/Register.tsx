@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { legalDocuments } from '../config/legalDocuments';
 import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { Head } from '../components/layout/Head';
@@ -16,6 +17,8 @@ export const Register = () => {
     const [senha, setSenha] = useState('');
     const [senhaConfirmacao, setSenhaConfirmacao] = useState('');
     const [codigo, setCodigo] = useState('');
+    const [aceitouTermos, setAceitouTermos] = useState(false);
+    const [leuPolitica, setLeuPolitica] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
@@ -24,13 +27,23 @@ export const Register = () => {
         e.preventDefault();
         setError('');
         setSuccessMsg('');
+        if (!aceitouTermos || !leuPolitica) {
+            setError('Aceite os Termos de Uso e confirme a leitura da Política de Privacidade.');
+            return;
+        }
         if (senha !== senhaConfirmacao) {
             setError('Senhas não conferem.');
             return;
         }
         setLoading(true);
         try {
-            await registerUser(nome, email, senha, senhaConfirmacao);
+            await registerUser({
+                nome, email, senha, senhaConfirmacao,
+                aceitouTermosDeUso: aceitouTermos,
+                versaoTermosDeUso: legalDocuments.terms.version,
+                confirmouLeituraPoliticaPrivacidade: leuPolitica,
+                versaoPoliticaPrivacidade: legalDocuments.privacy.version,
+            });
             setStep('code');
             setSuccessMsg('Código enviado para seu e-mail. Verifique sua caixa de entrada.');
         } catch (e) {
@@ -117,7 +130,17 @@ export const Register = () => {
                                         required
                                         disabled={loading}
                                     />
-                                    <Button type="submit" variant="primary" size="large" disabled={loading} fullWidth>
+                                    <div className="space-y-4 text-sm text-gray-700">
+                                        <div className="flex items-start gap-3">
+                                            <input className="mt-1 shrink-0" type="checkbox" id="aceitouTermos" name="aceitouTermosDeUso" checked={aceitouTermos} onChange={e => setAceitouTermos(e.target.checked)} disabled={loading} />
+                                            <label htmlFor="aceitouTermos">Li e aceito os <Link className="text-primary underline" to={legalDocuments.terms.route} target="_blank" rel="noopener noreferrer">Termos de Uso</Link> (versão {legalDocuments.terms.version}).</label>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <input className="mt-1 shrink-0" type="checkbox" id="leuPolitica" name="confirmouLeituraPoliticaPrivacidade" checked={leuPolitica} onChange={e => setLeuPolitica(e.target.checked)} disabled={loading} />
+                                            <label htmlFor="leuPolitica">Declaro que li a <Link className="text-primary underline" to={legalDocuments.privacy.route} target="_blank" rel="noopener noreferrer">Política de Privacidade</Link> (versão {legalDocuments.privacy.version}).</label>
+                                        </div>
+                                    </div>
+                                    <Button type="submit" variant="primary" size="large" disabled={loading || !aceitouTermos || !leuPolitica} fullWidth>
                                         {loading ? 'Enviando...' : 'Enviar Código'}
                                     </Button>
                                     <p className="text-center text-sm text-gray-600">Já tem conta? <Link to="/login" className="text-primary font-semibold">Entrar</Link></p>
@@ -140,7 +163,7 @@ export const Register = () => {
                             {step === 'done' && (
                                 <div className="flex flex-col gap-4">
                                     <Button variant="primary" size="large" fullWidth onClick={() => navigate('/login')}>Ir para Login</Button>
-                                    <Button variant="outline" size="small" onClick={() => { setStep('form'); setCodigo(''); setSenha(''); setSenhaConfirmacao(''); }}>Novo Cadastro</Button>
+                                    <Button variant="outline" size="small" onClick={() => { setStep('form'); setCodigo(''); setSenha(''); setSenhaConfirmacao(''); setAceitouTermos(false); setLeuPolitica(false); }}>Novo Cadastro</Button>
                                 </div>
                             )}
                         </div>
