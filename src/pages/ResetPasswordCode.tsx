@@ -6,6 +6,7 @@ import { Head } from "../components/layout/Head";
 import { Section } from "../components/ui/Section";
 import { Container } from "../components/ui/Container";
 import { Button } from "../components/ui/Button";
+import { PasswordField } from "../components/ui/PasswordField";
 import { ApiError, confirmPasswordResetByCode } from "../services/api";
 
 export const ResetPasswordCode = () => {
@@ -69,15 +70,25 @@ export const ResetPasswordCode = () => {
                   <input id="codigo" type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} required disabled={loading} />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="novaSenha">Nova senha</label>
-                  <input id="novaSenha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required disabled={loading} />
-                </div>
+                <PasswordField
+                  label="Nova senha"
+                  id="novaSenha"
+                  value={novaSenha}
+                  onChange={(e) => setNovaSenha(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                  disabled={loading}
+                />
 
-                <div className="form-group">
-                  <label htmlFor="confirmar">Confirmar nova senha</label>
-                  <input id="confirmar" type="password" value={confirmar} onChange={(e) => setConfirmar(e.target.value)} required disabled={loading} />
-                </div>
+                <PasswordField
+                  label="Confirmar nova senha"
+                  id="confirmar"
+                  value={confirmar}
+                  onChange={(e) => setConfirmar(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                  disabled={loading}
+                />
 
                 <Button type="submit" variant="primary" size="large" disabled={loading} fullWidth>
                   {loading ? "Salvando..." : "Redefinir senha"}

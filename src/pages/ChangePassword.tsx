@@ -7,6 +7,7 @@ import { Head } from "../components/layout/Head";
 import { Section } from "../components/ui/Section";
 import { Container } from "../components/ui/Container";
 import { Button } from "../components/ui/Button";
+import { PasswordField } from "../components/ui/PasswordField";
 import { ApiError, updatePasswordLogged } from "../services/api";
 
 export const ChangePassword = () => {
@@ -94,20 +95,35 @@ export const ChangePassword = () => {
               )}
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                <div className="form-group">
-                  <label htmlFor="senhaAtual">Senha atual</label>
-                  <input id="senhaAtual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} required disabled={loading || blocked} />
-                </div>
+                <PasswordField
+                  label="Senha atual"
+                  id="senhaAtual"
+                  value={senhaAtual}
+                  onChange={(e) => setSenhaAtual(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                  disabled={loading || blocked}
+                />
 
-                <div className="form-group">
-                  <label htmlFor="novaSenha">Nova senha</label>
-                  <input id="novaSenha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required disabled={loading || blocked} />
-                </div>
+                <PasswordField
+                  label="Nova senha"
+                  id="novaSenha"
+                  value={novaSenha}
+                  onChange={(e) => setNovaSenha(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                  disabled={loading || blocked}
+                />
 
-                <div className="form-group">
-                  <label htmlFor="confirmar">Confirmar nova senha</label>
-                  <input id="confirmar" type="password" value={confirmar} onChange={(e) => setConfirmar(e.target.value)} required disabled={loading || blocked} />
-                </div>
+                <PasswordField
+                  label="Confirmar nova senha"
+                  id="confirmar"
+                  value={confirmar}
+                  onChange={(e) => setConfirmar(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                  disabled={loading || blocked}
+                />
 
                 <Button type="submit" variant="primary" size="large" disabled={loading || blocked} fullWidth>
                   {loading ? "Salvando..." : "Alterar senha"}
