@@ -19,8 +19,8 @@ export const ChangePassword = () => {
   const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<{ senhaAtual?: string; novaSenha?: string }>({});
   const [blocked, setBlocked] = useState(false);
+  const errorMessages = [...new Set(error.split('\n').map(message => message.trim()).filter(Boolean))];
 
   if (!user) {
     navigate("/login");
@@ -30,7 +30,6 @@ export const ChangePassword = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    setFieldErrors({});
     setBlocked(false);
 
     if (novaSenha !== confirmar) {
@@ -52,15 +51,9 @@ export const ChangePassword = () => {
       navigate("/profile", { state: { message: "Senha atualizada." } });
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        // (PDF) erros por campo
         if (err.status === 400 && err.errors) {
-          setFieldErrors({
-            senhaAtual: err.errors.senhaAtual,
-            novaSenha: err.errors.novaSenha,
-          });
-          if (!err.errors.senhaAtual && !err.errors.novaSenha) {
-            setError(err.message);
-          }
+          const messages = Object.values(err.errors).filter(message => message.trim());
+          setError(messages.length ? messages.join('\n') : err.message);
         } else {
           setError(err.message);
         }
@@ -87,9 +80,16 @@ export const ChangePassword = () => {
               <h1 className="text-3xl font-bold text-gray-900 text-center mb-2">Alterar senha</h1>
               <p className="text-center text-gray-600 mb-6">Informe sua senha atual e defina uma nova.</p>
 
-              {error && (
+              {errorMessages.length > 0 && (
                 <div className="p-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm text-center mb-4" role="alert">
-                  {error}
+                  {errorMessages.length === 1 ? errorMessages[0] : (
+                    <>
+                      <p className="font-semibold mb-2">Confira os dados informados:</p>
+                      <ul className="list-disc pl-5 space-y-1 text-left">
+                        {errorMessages.map(message => <li key={message}>{message}</li>)}
+                      </ul>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -97,13 +97,11 @@ export const ChangePassword = () => {
                 <div className="form-group">
                   <label htmlFor="senhaAtual">Senha atual</label>
                   <input id="senhaAtual" type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} required disabled={loading || blocked} />
-                  {fieldErrors.senhaAtual && <p className="text-sm text-red-600 mt-1">{fieldErrors.senhaAtual}</p>}
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="novaSenha">Nova senha</label>
                   <input id="novaSenha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required disabled={loading || blocked} />
-                  {fieldErrors.novaSenha && <p className="text-sm text-red-600 mt-1">{fieldErrors.novaSenha}</p>}
                 </div>
 
                 <div className="form-group">

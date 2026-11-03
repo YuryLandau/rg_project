@@ -429,7 +429,16 @@ function asFieldErrors(value: unknown): Record<string, string> | undefined {
   if (!record) return undefined;
 
   return Object.fromEntries(
-    Object.entries(record).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+    Object.entries(record).flatMap(([field, messages]) => {
+      if (typeof messages === 'string') return [[field, messages]];
+      if (Array.isArray(messages)) {
+        const text = [...new Set(messages.filter((message): message is string =>
+          typeof message === 'string' && message.trim().length > 0,
+        ))].join('\n');
+        if (text) return [[field, text]];
+      }
+      return [];
+    }),
   );
 }
 
@@ -450,7 +459,8 @@ async function requestJson<T>(path: string, init: RequestInit, accessToken?: str
     ? await authenticatedFetch(path, requestInit, accessToken)
     : await fetch(`${BASE_URL}${path}`, requestInit);
 
-  const isJson = (res.headers.get("content-type") || "").includes("application/json");
+  const contentType = (res.headers.get("content-type") || "").split(';')[0].trim().toLowerCase();
+  const isJson = contentType === "application/json" || contentType.endsWith("+json");
   const data: unknown = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
 
   if (!res.ok) {
