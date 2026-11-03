@@ -9,6 +9,22 @@ import { Button } from '../components/ui/Button';
 import { PasswordField } from '../components/ui/PasswordField';
 import { registerUser, validateUserCode } from '../services/api';
 
+function getErrorMessages(message: string): string[] {
+    const collectMessages = (value: unknown): string[] => {
+        if (typeof value === 'string') return value.trim() ? [value.trim()] : [];
+        if (Array.isArray(value)) return value.flatMap(collectMessages);
+        if (value && typeof value === 'object') return Object.values(value).flatMap(collectMessages);
+        return [];
+    };
+
+    try {
+        const messages = [...new Set(collectMessages(JSON.parse(message)))];
+        return messages.length ? messages : ['Não foi possível concluir a solicitação. Tente novamente.'];
+    } catch {
+        return [message];
+    }
+}
+
 export const Register = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState<'form' | 'code' | 'done'>('form');
@@ -22,6 +38,7 @@ export const Register = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
+    const errorMessages = error ? getErrorMessages(error) : [];
 
     const handleSubmitCadastro = async (e: FormEvent) => {
         e.preventDefault();
@@ -91,7 +108,14 @@ export const Register = () => {
 
                             {error && (
                                 <div className="p-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm text-center mb-4" role="alert">
-                                    {error}
+                                    {errorMessages.length === 1 ? errorMessages[0] : (
+                                        <>
+                                            <p className="font-semibold mb-2">Confira os dados informados:</p>
+                                            <ul className="list-disc pl-5 space-y-1 text-left">
+                                                {errorMessages.map(message => <li key={message}>{message}</li>)}
+                                            </ul>
+                                        </>
+                                    )}
                                 </div>
                             )}
                             {successMsg && (
