@@ -20,7 +20,7 @@ export const Button: React.FC<ButtonProps> = ({
     disabled = false,
     ...props
 }) => {
-    const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-4 disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-4 enabled:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variantClasses = {
         primary: 'bg-primary text-white hover:bg-primary/90 focus:ring-primary/30 shadow-sm hover:shadow-md',
