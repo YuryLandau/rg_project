@@ -91,6 +91,7 @@ export const Login = () => {
 
                                 <Button
                                     type="submit"
+                                    className="enabled:cursor-pointer"
                                     variant="primary"
                                     size="large"
                                     disabled={loading}

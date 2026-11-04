@@ -82,7 +82,7 @@ export const SiteLayout = () => {
         <div className="relative">
             <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
                 aria-label="Menu do usuário"
                 aria-expanded={userMenuOpen}
             >
@@ -143,7 +143,7 @@ export const SiteLayout = () => {
         </div>
     ) : (
         <Link to="/login">
-            <Button variant="primary" size="small">Login</Button>
+            <Button variant="primary" size="small" className="enabled:cursor-pointer">Login</Button>
         </Link>
     );
 
