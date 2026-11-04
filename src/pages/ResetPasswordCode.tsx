@@ -18,6 +18,7 @@ export const ResetPasswordCode = () => {
   const [confirmar, setConfirmar] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const errorMessages = [...new Set(error.split('\n').map(message => message.trim()).filter(Boolean))];
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -34,7 +35,8 @@ export const ResetPasswordCode = () => {
       navigate("/login", { state: { message: "Senha redefinida. Faça login." } });
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 400) {
-        setError("Código inválido/expirado ou senha igual à atual.");
+        const messages = Object.values(err.errors ?? {}).filter(message => message.trim());
+        setError(messages.length ? messages.join('\n') : err.message);
       } else {
         setError(err instanceof Error ? err.message : "Erro ao redefinir senha.");
       }
@@ -53,9 +55,16 @@ export const ResetPasswordCode = () => {
               <h1 className="text-3xl font-bold text-gray-900 text-center mb-2">Redefinir senha</h1>
               <p className="text-center text-gray-600 mb-6">Use o código recebido por e-mail.</p>
 
-              {error && (
+              {errorMessages.length > 0 && (
                 <div className="p-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm text-center mb-4" role="alert">
-                  {error}
+                  {errorMessages.length === 1 ? errorMessages[0] : (
+                    <>
+                      <p className="font-semibold mb-2">Confira os dados informados:</p>
+                      <ul className="list-disc pl-5 space-y-1 text-left">
+                        {errorMessages.map(message => <li key={message}>{message}</li>)}
+                      </ul>
+                    </>
+                  )}
                 </div>
               )}
 
