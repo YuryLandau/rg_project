@@ -13,6 +13,22 @@ import {
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:5000';
 export const API_BASE_URL = BASE_URL;
 
+export class ApiConnectionError extends Error {
+    constructor(cause: unknown) {
+        super('Não foi possível comunicar-se com o servidor. Tente novamente.', { cause });
+        this.name = 'ApiConnectionError';
+    }
+}
+
+async function fetchApi(path: string, init: RequestInit): Promise<Response> {
+    try {
+        return await fetch(`${BASE_URL}${path}`, init);
+    } catch (error) {
+        if (init.signal?.aborted) throw error;
+        throw new ApiConnectionError(error);
+    }
+}
+
 interface LoginResponse {
     tokenAcesso: string;
 }
@@ -67,7 +83,7 @@ let refreshRequest: Promise<string> | null = null;
 
 async function performTokenRefresh(generation: number): Promise<string> {
     if (generation !== getSessionGeneration()) throw new ApiError('Sessão encerrada.', 401);
-    const response = await fetch(`${BASE_URL}/api/user/refresh-token`, {
+    const response = await fetchApi('/api/user/refresh-token', {
         method: 'POST',
         credentials: 'include',
         headers: buildHeaders(undefined, { 'X-Refresh-Transport': 'cookie' }),
@@ -142,7 +158,7 @@ async function authenticatedFetch(
         const headers = new Headers(init.headers);
         if (token) headers.set('Authorization', `Bearer ${token}`);
 
-        return fetch(`${BASE_URL}${path}`, { ...init, credentials: 'include', headers });
+        return fetchApi(path, { ...init, credentials: 'include', headers });
     };
 
     const response = await execute(accessToken);
@@ -159,7 +175,7 @@ async function authenticatedFetch(
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-    const res = await fetch(`${BASE_URL}/api/user/login`, {
+    const res = await fetchApi('/api/user/login', {
         method: 'POST',
         credentials: 'include',
         headers: buildHeaders(undefined, { 'X-Refresh-Transport': 'cookie' }),
@@ -180,7 +196,7 @@ export interface RegisterRequest {
 }
 
 export async function registerUser(payload: RegisterRequest): Promise<RegisterResponse> {
-    const res = await fetch(`${BASE_URL}/api/user/register`, {
+    const res = await fetchApi('/api/user/register', {
         method: 'POST',
         headers: buildHeaders(),
         body: JSON.stringify(payload)
@@ -189,7 +205,7 @@ export async function registerUser(payload: RegisterRequest): Promise<RegisterRe
 }
 
 export async function validateUserCode(email: string, codigo: string): Promise<ValidateResponse> {
-    const res = await fetch(`${BASE_URL}/api/user/validate`, {
+    const res = await fetchApi('/api/user/validate', {
         method: 'POST',
         headers: buildHeaders(),
         body: JSON.stringify({ email, codigo })
@@ -458,7 +474,7 @@ async function requestJson<T>(path: string, init: RequestInit, accessToken?: str
 
   const res = accessToken
     ? await authenticatedFetch(path, requestInit, accessToken)
-    : await fetch(`${BASE_URL}${path}`, requestInit);
+    : await fetchApi(path, requestInit);
 
   const contentType = (res.headers.get("content-type") || "").split(';')[0].trim().toLowerCase();
   const isJson = contentType === "application/json" || contentType.endsWith("+json");
@@ -489,7 +505,7 @@ export async function resendUserCode(email: string): Promise<void> {
 
 // (4) Esqueci minha senha
 export async function requestPasswordReset(email: string): Promise<void> {
-    const res = await fetch(`${BASE_URL}/api/user/password-reset/request`, {
+    const res = await fetchApi('/api/user/password-reset/request', {
         method: 'POST',
         headers: buildHeaders(),
         body: JSON.stringify({ email })

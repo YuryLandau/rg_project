@@ -44,7 +44,7 @@ export const ChangePassword = () => {
 
       if (resp?.requiresReauth) {
         // (PDF) deslogar e redirecionar
-        logout?.();
+        void logout().catch(() => undefined);
         navigate("/login", { state: { message: "Faça login novamente." } });
         return;
       }

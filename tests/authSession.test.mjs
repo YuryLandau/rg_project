@@ -129,6 +129,40 @@ test('refresh inválido encerra sessão, erro transitório preserva token em mem
     assert.equal(session.readStoredTokens(), null);
 });
 
+test('falhas de conexão têm mensagem própria nas chamadas públicas e autenticadas', async () => {
+    const { api, session } = await setup();
+    session.saveStoredTokens({ accessToken: 'current' });
+    const cause = new TypeError('Failed to fetch');
+    globalThis.fetch = async () => { throw cause; };
+
+    const isConnectionError = error => {
+        assert.ok(error instanceof api.ApiConnectionError);
+        assert.equal(error.message, 'Não foi possível comunicar-se com o servidor. Tente novamente.');
+        assert.equal(error.cause, cause);
+        return true;
+    };
+
+    await assert.rejects(api.login('user@test', 'password'), isConnectionError);
+    await assert.rejects(api.resendUserCode('user@test'), isConnectionError);
+    await assert.rejects(api.updatePasswordLogged('current', 'old', 'new', 'new'), isConnectionError);
+    await assert.rejects(api.refreshAccessToken(), isConnectionError);
+    assert.equal(session.readStoredTokens().accessToken, 'current');
+});
+
+test('resposta HTTP de validação mantém a mensagem da API', async () => {
+    const { api } = await setup();
+    globalThis.fetch = async () => Response.json({
+        errors: { NovaSenhaConfirmacao: ['Confirmação da nova senha inválida.'] },
+    }, { status: 400 });
+
+    await assert.rejects(api.updatePasswordLogged('current', 'old', 'new', 'different'), error => {
+        assert.ok(error instanceof api.ApiError);
+        assert.equal(error.status, 400);
+        assert.equal(error.errors.NovaSenhaConfirmacao, 'Confirmação da nova senha inválida.');
+        return true;
+    });
+});
+
 test('login e logout enviam credenciais e o cabeçalho exigido para cookies', async () => {
     const { api } = await setup();
     const calls = [];

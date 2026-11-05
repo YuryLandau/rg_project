@@ -7,7 +7,7 @@ import { Section } from "../components/ui/Section";
 import { Container } from "../components/ui/Container";
 import { Button } from "../components/ui/Button";
 import { validateUserCode } from "../services/api";
-import { ApiError, resendUserCode } from "../services/api";
+import { ApiConnectionError, ApiError, resendUserCode } from "../services/api";
 
 export const VerifyEmail = () => {
   const navigate = useNavigate();
@@ -76,15 +76,17 @@ export const VerifyEmail = () => {
     setResending(true);
     try {
       await resendUserCode(email);
-      setInfo("Se este e-mail existir e estiver pendente, enviaremos um novo código.");
-      setCooldown(60);
-    } catch {
-      // Mesmo se der erro, não exponha existência do e-mail.
-      setInfo("Se este e-mail existir e estiver pendente, enviaremos um novo código.");
-      setCooldown(60);
+    } catch (error) {
+      if (error instanceof ApiConnectionError) {
+        setError(error.message);
+        return;
+      }
     } finally {
       setResending(false);
     }
+    // A resposta ao reenvio não revela se o endereço está cadastrado.
+    setInfo("Se este e-mail existir e estiver pendente, enviaremos um novo código.");
+    setCooldown(60);
   };
 
   return (

@@ -20,7 +20,9 @@ export const SiteLayout = () => {
         featureFlags.authenticationEnabled && featureFlags.subscriptionsEnabled;
 
     const handleLogout = () => {
-        logout();
+        void logout().catch(error => {
+            alert(`${getErrorMessage(error, 'Erro ao sair.')} A saída no servidor não foi confirmada.`);
+        });
         navigate('/');
     };
 

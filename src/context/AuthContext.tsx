@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Navigate } from 'react-router';
 import type { ReactNode } from 'react';
 import {
+    ApiConnectionError,
     getFreshAccessToken,
     getProfile,
     login as apiLogin,
@@ -117,7 +118,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         clearStoredSession();
         try {
             const resp = await apiLogin(email, password);
-            setAccessToken(resp.tokenAcesso);
             const perfil = await getProfile(resp.tokenAcesso);
             const mapped: User = {
                 id: perfil.id,
@@ -125,10 +125,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 name: perfil.nome,
                 plan: mapFuncaoParaPlano(perfil.funcao ?? perfil.tipoConta)
             };
+            setAccessToken(resp.tokenAcesso);
             setUser(mapped);
             persist(mapped, resp.tokenAcesso);
             return true;
         } catch (e) {
+            if (e instanceof ApiConnectionError) throw e;
             console.error(e);
             return false;
         }
@@ -137,8 +139,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logout = async () => {
         try {
             if (featureFlags.authenticationEnabled && accessToken) await apiLogout(accessToken);
-        } catch {
-            // ignore network errors
+        } catch (error) {
+            if (error instanceof ApiConnectionError) throw error;
         } finally {
             setUser(null);
             setAccessToken(null);
