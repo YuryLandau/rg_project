@@ -47,6 +47,22 @@ test('tokens antigos são removidos e access token só existe na memória da pá
     assert.equal(session.readStoredTokens(), null);
 });
 
+test('alteração de senha autenticada envia a confirmação no campo esperado pela API', async () => {
+    const { api } = await setup();
+    const senhaAtual = 'Atual123!';
+    const novaSenha = 'Nova456!';
+    globalThis.fetch = async (url, init) => {
+        assert.equal(url, 'https://api.rgbim.test/api/user/profile/update-password');
+        assert.equal(init.method, 'PATCH');
+        assert.equal(new Headers(init.headers).get('Authorization'), 'Bearer access');
+        assert.deepEqual(JSON.parse(init.body), { senhaAtual, novaSenha, novaSenhaConfirmacao: novaSenha });
+        return Response.json({ status: 200, requiresReauth: true });
+    };
+
+    assert.equal((await api.updatePasswordLogged('access', senhaAtual, novaSenha, novaSenha)).requiresReauth, true);
+    assert.equal((await api.updateUserPassword('access', { senhaAtual, novaSenha, confirmarNovaSenha: novaSenha })).requiresReauth, true);
+});
+
 test('recarregar a página renova pelo cookie sem enviar token ou id no corpo', async () => {
     const { session, api } = await setup();
     globalThis.fetch = async (url, init) => {

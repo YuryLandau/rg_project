@@ -376,10 +376,11 @@ export async function updateUserPassword(
     accessToken: string,
     payload: { senhaAtual: string; novaSenha: string; confirmarNovaSenha: string }
 ): Promise<UpdatePasswordResult> {
+    const { senhaAtual, novaSenha, confirmarNovaSenha } = payload;
     const res = await authenticatedFetch('/api/user/profile/update-password', {
         method: 'PATCH',
         headers: buildHeaders(accessToken),
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ senhaAtual, novaSenha, novaSenhaConfirmacao: confirmarNovaSenha })
     }, accessToken);
 
     const text = await res.text();
@@ -532,7 +533,7 @@ export async function updatePasswordLogged(
   return await requestJson<{ requiresReauth: boolean }>("/api/user/profile/update-password", {
     method: "PATCH",
     headers: { Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ senhaAtual, novaSenha, confirmarNovaSenha }),
+    body: JSON.stringify({ senhaAtual, novaSenha, novaSenhaConfirmacao: confirmarNovaSenha }),
   }, accessToken);
 }
 
