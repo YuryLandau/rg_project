@@ -306,10 +306,6 @@ export const Home = () => {
                                     </li>
                                     <li className="flex items-start gap-3">
                                         <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
-                                        <span className="text-gray-700">10 downloads por mês</span>
-                                    </li>
-                                    <li className="flex items-start gap-3">
-                                        <span className="text-primary font-bold text-xl shrink-0 mt-0.5">✓</span>
                                         <span className="text-gray-700">Suporte por email</span>
                                     </li>
                                 </ul>

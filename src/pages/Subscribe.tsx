@@ -26,7 +26,6 @@ const plans: Plan[] = [
             'Plotagem DWG (múltiplos arquivos)',
             'Plotagem DWG 3D',
             'Plotagem PDF (unificado ou múltiplos)',
-            '10 downloads por mês',
             'Suporte por email',
             'Documentação básica'
         ]
