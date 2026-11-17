@@ -63,6 +63,25 @@ test('alteração de senha autenticada envia a confirmação no campo esperado p
     assert.equal((await api.updateUserPassword('access', { senhaAtual, novaSenha, confirmarNovaSenha: novaSenha })).requiresReauth, true);
 });
 
+test('reembolso envia somente a identidade autenticada e consulta o protocolo', async () => {
+    const { api } = await setup();
+    const protocol = '408ff002-0152-4b93-8fa6-63f15763f848';
+    const calls = [];
+    globalThis.fetch = async (url, init) => {
+        assert.equal(url, 'https://api.rgbim.test/api/user/subscription-refund');
+        assert.equal(new Headers(init.headers).get('Authorization'), 'Bearer access');
+        assert.equal(init.body, undefined);
+        calls.push(init.method);
+        return init.method === 'POST'
+            ? Response.json({ status: 'processing', protocol }, { status: 202 })
+            : Response.json({ status: 'refunded', protocol });
+    };
+
+    assert.deepEqual(await api.subscriptionRefund('access', 'POST'), { status: 'processing', protocol });
+    assert.deepEqual(await api.subscriptionRefund('access', 'GET'), { status: 'refunded', protocol });
+    assert.deepEqual(calls, ['POST', 'GET']);
+});
+
 test('recarregar a página renova pelo cookie sem enviar token ou id no corpo', async () => {
     const { session, api } = await setup();
     globalThis.fetch = async (url, init) => {

@@ -248,6 +248,21 @@ export async function manageSubscription(token: string) {
     return data.urlStripe;
 }
 
+export interface SubscriptionRefund {
+    status: 'unavailable' | 'available' | 'ineligible' | 'eligibility_unavailable' | 'processing' | 'pending' | 'refunded' | 'review';
+    protocol?: string;
+    earlierProtocol?: string;
+}
+
+export async function subscriptionRefund(token: string, method: 'GET' | 'POST', signal?: AbortSignal) {
+    const res = await authenticatedFetch('/api/user/subscription-refund', {
+        method,
+        headers: buildHeaders(token),
+        signal,
+    }, token);
+    return handleResponse<SubscriptionRefund>(res);
+}
+
 export interface PluginDownloadDto {
     key: string;
     nome?: string;

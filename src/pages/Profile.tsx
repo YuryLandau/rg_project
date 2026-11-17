@@ -6,6 +6,7 @@ import { Head } from '../components/layout/Head';
 import { Section } from '../components/ui/Section';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
+import { SubscriptionRefund } from '../components/account/SubscriptionRefund';
 
 export const Profile = () => {
     const navigate = useNavigate();
@@ -82,6 +83,8 @@ export const Profile = () => {
     </Button>
 </div>
                                 </div>
+
+                                {accessToken && <SubscriptionRefund accessToken={accessToken} refreshProfile={refreshProfile} />}
 
                                 <Button
                                     type="button"
